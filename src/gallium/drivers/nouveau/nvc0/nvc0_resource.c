@@ -174,5 +174,4 @@ nvc0_screen_init_resource_functions(struct pipe_screen *pscreen)
    pscreen->resource_from_handle = nvc0_resource_from_handle;
    pscreen->resource_get_handle = nvc0_miptree_get_handle;
    pscreen->resource_destroy = nvc0_resource_destroy;
-   pscreen->resource_from_user_memory = nvc0_resource_from_user_memory;
 }
