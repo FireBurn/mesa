@@ -57,7 +57,7 @@ panfrost_create_compute_state(
 
         panfrost_shader_compile(pctx->screen, &ctx->shaders, &ctx->descs,
                                 cso->prog, &ctx->base.debug, v,
-                                cso->req_local_mem);
+                                cso->static_shared_mem);
 
         return so;
 }
