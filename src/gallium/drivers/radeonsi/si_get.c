@@ -468,6 +468,7 @@ static int si_get_shader_param(struct pipe_screen *pscreen, enum pipe_shader_typ
       if (shader == PIPE_SHADER_COMPUTE) {
          return (1 << PIPE_SHADER_IR_NATIVE) |
                 (1 << PIPE_SHADER_IR_NIR) |
+                (1 << PIPE_SHADER_IR_NIR_SERIALIZED) |
                 (1 << PIPE_SHADER_IR_TGSI);
       }
       return (1 << PIPE_SHADER_IR_TGSI) |
