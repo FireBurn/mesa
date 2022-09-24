@@ -396,6 +396,9 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    if (buf->status & NOUVEAU_BUFFER_STATUS_USER_PTR)
       return nouveau_user_ptr_transfer_map(pipe, resource, level, usage, box, ptransfer);
 
+   if (usage & PIPE_MAP_DIRECTLY && buf->domain == NOUVEAU_BO_VRAM)
+      return NULL;
+
    struct nouveau_transfer *tx = MALLOC_STRUCT(nouveau_transfer);
    uint8_t *map;
    int ret;
