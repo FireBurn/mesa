@@ -788,7 +788,7 @@ fn extract<'a, const S: usize>(buf: &'a mut &[u8]) -> &'a [u8; S] {
 }
 
 fn optimize_local_size(d: &Device, grid: &mut [u32; 3], block: &mut [u32; 3]) {
-    let mut threads = d.max_threads_per_block() as u32;
+    let mut threads = d.max_threads_per_block() as u32 / 4;
     let dim_threads = d.max_block_sizes();
     let subgroups = d.subgroups();
 
@@ -966,7 +966,7 @@ impl Kernel {
                     let buf = Arc::new(
                         q.device
                             .screen
-                            .resource_create_buffer(printf_size, ResourceType::Normal)
+                            .resource_create_buffer(printf_size, ResourceType::Staging)
                             .unwrap(),
                     );
 

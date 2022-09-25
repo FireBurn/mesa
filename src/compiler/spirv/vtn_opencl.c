@@ -297,7 +297,6 @@ static const struct {
    REMAP(Normalize, "normalize"),
    REMAP(Degrees, "degrees"),
    REMAP(Radians, "radians"),
-   REMAP(Rotate, "rotate"),
    REMAP(Smoothstep, "smoothstep"),
    REMAP(Step, "step"),
 
@@ -553,6 +552,8 @@ handle_special(struct vtn_builder *b, uint32_t opcode,
       if (nb->shader->options->lower_ffma32 && srcs[0]->bit_size == 32)
          break;
       return nir_ffma(nb, srcs[0], srcs[1], srcs[2]);
+   case OpenCLstd_Rotate:
+         return nir_urol(nb, srcs[0], nir_iand(nb, nir_imm_int(nb, srcs[0]->bit_size - 1), nir_u2u(nb, srcs[1], 32)));
    default:
       break;
    }

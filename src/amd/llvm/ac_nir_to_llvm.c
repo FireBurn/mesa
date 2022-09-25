@@ -683,6 +683,23 @@ static bool visit_alu(struct ac_nir_context *ctx, const nir_alu_instr *instr)
    case nir_op_fmul:
       src[0] = ac_to_float(&ctx->ac, src[0]);
       src[1] = ac_to_float(&ctx->ac, src[1]);
+      if (nir_src_is_const(instr->src[0].src) && nir_src_as_float(instr->src[0].src) == 1.0) {
+         if (ac_get_type_size(def_type) == 8) {
+            result = ac_build_intrinsic(&ctx->ac, "llvm.canonicalize.f64", ctx->ac.f64, &src[1], 1, AC_FUNC_ATTR_READNONE);
+            break;
+         } else if (ac_get_type_size(def_type) == 4) {
+            result = ac_build_intrinsic(&ctx->ac, "llvm.canonicalize.f32", ctx->ac.f32, &src[1], 1, AC_FUNC_ATTR_READNONE);
+            break;
+         }
+      } else if (nir_src_is_const(instr->src[1].src) && nir_src_as_float(instr->src[1].src) == 1.0) {
+         if (ac_get_type_size(def_type) == 8) {
+            result = ac_build_intrinsic(&ctx->ac, "llvm.canonicalize.f64", ctx->ac.f64, &src[0], 1, AC_FUNC_ATTR_READNONE);
+            break;
+         } else if (ac_get_type_size(def_type) == 4) {
+            result = ac_build_intrinsic(&ctx->ac, "llvm.canonicalize.f32", ctx->ac.f32, &src[0], 1, AC_FUNC_ATTR_READNONE);
+            break;
+         }
+      }
       result = LLVMBuildFMul(ctx->ac.builder, src[0], src[1], "");
       break;
    case nir_op_fmulz:

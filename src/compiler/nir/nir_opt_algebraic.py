@@ -1053,7 +1053,7 @@ for s in [8, 16, 32, 64]:
        (('ineg', ('b2i{}'.format(s), 'a@{}'.format(s))), a),
 
        # SM5 32-bit shifts are defined to use the 5 least significant bits (or 4 bits for 16 bits)
-       (('ishl', 'a@{}'.format(s), ('iand', s - 1, b)), ('ishl', a, b)),
+#       (('ishl', 'a@{}'.format(s), ('iand', s - 1, b)), ('ishl', a, b)),
        (('ishr', 'a@{}'.format(s), ('iand', s - 1, b)), ('ishr', a, b)),
        (('ushr', 'a@{}'.format(s), ('iand', s - 1, b)), ('ushr', a, b)),
        (('ushr', 'a@{}'.format(s), ('ishl(is_used_once)', ('iand', b, 1), last_shift_bit)), ('ushr', a, ('ishl', b, last_shift_bit))),
@@ -1266,8 +1266,10 @@ optimizations.extend([
    (('ior', ('ushr@16', a, b), ('ishl@16', a, ('isub', 16, b))), ('uror', a, b), '!options->lower_rotate'),
    (('ior', ('ushr@32', a, b), ('ishl@32', a, ('iadd', 32, ('ineg', b)))), ('uror', a, b), '!options->lower_rotate'),
    (('ior', ('ushr@32', a, b), ('ishl@32', a, ('isub', 32, b))), ('uror', a, b), '!options->lower_rotate'),
+   (('urol@8',  a, b), ('ior', ('ishl', a, b), ('ushr', a, ('isub',  8, b))), 'options->lower_rotate'),
    (('urol@16', a, b), ('ior', ('ishl', a, b), ('ushr', a, ('isub', 16, b))), 'options->lower_rotate'),
    (('urol@32', a, b), ('ior', ('ishl', a, b), ('ushr', a, ('isub', 32, b))), 'options->lower_rotate'),
+   (('urol@64', a, b), ('ior', ('ishl', a, b), ('ushr', a, ('isub', 64, b))), 'options->lower_rotate'),
    (('uror@16', a, b), ('ior', ('ushr', a, b), ('ishl', a, ('isub', 16, b))), 'options->lower_rotate'),
    (('uror@32', a, b), ('ior', ('ushr', a, b), ('ishl', a, ('isub', 32, b))), 'options->lower_rotate'),
    # Exponential/logarithmic identities
