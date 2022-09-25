@@ -1020,10 +1020,10 @@ clc_spirv_to_dxil(struct clc_libclc *lib,
    NIR_PASS_V(nir, split_unaligned_loads_stores);
 
    assert(nir->info.cs.ptr_size == 64);
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ssbo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ssbo, false,
               nir_address_format_32bit_index_offset_pack64);
    NIR_PASS_V(nir, nir_lower_explicit_io,
-              nir_var_mem_shared | nir_var_function_temp | nir_var_uniform,
+              nir_var_mem_shared | nir_var_function_temp | nir_var_uniform, false,
               nir_address_format_32bit_offset_as_64bit);
 
    NIR_PASS_V(nir, nir_lower_system_values);
@@ -1078,7 +1078,7 @@ clc_spirv_to_dxil(struct clc_libclc *lib,
 
    NIR_PASS_V(nir, clc_nir_lower_kernel_input_loads, inputs_var);
    NIR_PASS_V(nir, split_unaligned_loads_stores);
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo, false,
               nir_address_format_32bit_index_offset);
    NIR_PASS_V(nir, clc_nir_lower_system_values, work_properties_var);
    NIR_PASS_V(nir, dxil_nir_lower_loads_stores_to_dxil);

@@ -353,7 +353,7 @@ gl_nir_lower_buffers(nir_shader *shader,
     */
    if (progress) {
       nir_validate_shader(shader, "Lowering buffer interface derefs");
-      nir_lower_explicit_io(shader, nir_var_mem_ubo | nir_var_mem_ssbo,
+      nir_lower_explicit_io(shader, nir_var_mem_ubo | nir_var_mem_ssbo, false,
                             nir_address_format_32bit_index_offset);
    }
 

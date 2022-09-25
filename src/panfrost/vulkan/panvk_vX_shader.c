@@ -316,12 +316,12 @@ panvk_per_arch(shader_create)(struct panvk_device *dev,
    NIR_PASS_V(nir, panvk_per_arch(nir_lower_descriptors),
               dev, layout, &shader->has_img_access);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo, false,
               nir_address_format_32bit_index_offset);
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ssbo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ssbo, false,
               spirv_options.ssbo_addr_format);
    NIR_PASS_V(nir, nir_lower_explicit_io,
-              nir_var_mem_push_const,
+              nir_var_mem_push_const, false,
               nir_address_format_32bit_offset);
 
    if (gl_shader_stage_uses_workgroup(stage)) {
@@ -332,7 +332,7 @@ panvk_per_arch(shader_create)(struct panvk_device *dev,
       }
 
       NIR_PASS_V(nir, nir_lower_explicit_io,
-                 nir_var_mem_shared,
+                 nir_var_mem_shared, false,
                  nir_address_format_32bit_offset);
    }
 

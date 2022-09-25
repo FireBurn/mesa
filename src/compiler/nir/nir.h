@@ -4832,6 +4832,7 @@ void nir_lower_explicit_io_instr(struct nir_builder *b,
 
 bool nir_lower_explicit_io(nir_shader *shader,
                            nir_variable_mode modes,
+                           bool skip_samplers,
                            nir_address_format);
 
 bool

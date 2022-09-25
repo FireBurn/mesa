@@ -919,9 +919,9 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
 
    NIR_PASS(_, nir, brw_nir_lower_storage_image, compiler->devinfo);
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_global,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_global, false,
             nir_address_format_64bit_global);
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_push_const,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_push_const, false,
             nir_address_format_32bit_offset);
 
    NIR_PASS(_, nir, brw_nir_lower_ray_queries, &pdevice->info);
@@ -934,10 +934,10 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
               pdevice, pipeline->device->robust_buffer_access,
               layout, &stage->bind_map);
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ubo,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ubo, false,
             anv_nir_ubo_addr_format(pdevice,
                pipeline->device->robust_buffer_access));
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ssbo,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ssbo, false,
             anv_nir_ssbo_addr_format(pdevice,
                pipeline->device->robust_buffer_access));
 
@@ -982,7 +982,7 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
       }
 
       NIR_PASS(_, nir, nir_lower_explicit_io,
-               nir_var_mem_shared, nir_address_format_32bit_offset);
+               nir_var_mem_shared, false, nir_address_format_32bit_offset);
 
       if (nir->info.zero_initialize_shared_memory &&
           nir->info.shared_size > 0) {

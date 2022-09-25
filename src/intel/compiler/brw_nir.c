@@ -1268,7 +1268,7 @@ brw_postprocess_nir(nir_shader *nir, const struct brw_compiler *compiler,
    if (is_scalar && nir_shader_has_local_variables(nir)) {
       OPT(nir_lower_vars_to_explicit_types, nir_var_function_temp,
           glsl_get_natural_size_align_bytes);
-      OPT(nir_lower_explicit_io, nir_var_function_temp,
+      OPT(nir_lower_explicit_io, nir_var_function_temp, false,
           nir_address_format_32bit_offset);
       brw_nir_optimize(nir, compiler, is_scalar, false);
    }

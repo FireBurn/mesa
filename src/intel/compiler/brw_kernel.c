@@ -422,15 +422,15 @@ brw_kernel_from_spirv(struct brw_compiler *compiler,
 
    NIR_PASS_V(nir, nir_lower_memcpy);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant, false,
               nir_address_format_64bit_global);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_uniform,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_uniform, false,
               nir_address_format_32bit_offset_as_64bit);
 
    NIR_PASS_V(nir, nir_lower_explicit_io,
               nir_var_shader_temp | nir_var_function_temp |
-              nir_var_mem_shared | nir_var_mem_global,
+              nir_var_mem_shared | nir_var_mem_global, false,
               nir_address_format_62bit_generic);
 
    NIR_PASS_V(nir, nir_lower_frexp);

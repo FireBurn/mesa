@@ -419,7 +419,7 @@ st_nir_preprocess(struct st_context *st, struct gl_program *prog,
       NIR_PASS_V(prog->nir, nir_lower_vars_to_explicit_types,
                  nir_var_mem_shared, shared_type_info);
       NIR_PASS_V(prog->nir, nir_lower_explicit_io,
-                 nir_var_mem_shared, nir_address_format_32bit_offset);
+                 nir_var_mem_shared, false, nir_address_format_32bit_offset);
    }
 
    /* Do a round of constant folding to clean up address calculations */

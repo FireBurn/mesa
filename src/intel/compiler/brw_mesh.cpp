@@ -163,7 +163,7 @@ brw_nir_lower_tue_outputs(nir_shader *nir, brw_tue_map *map)
    NIR_PASS(_, nir, nir_lower_vars_to_explicit_types,
             nir_var_mem_task_payload, shared_type_info);
    NIR_PASS(_, nir, nir_lower_explicit_io,
-            nir_var_mem_task_payload, nir_address_format_32bit_offset);
+            nir_var_mem_task_payload, false, nir_address_format_32bit_offset);
 
    map->size_dw = ALIGN(DIV_ROUND_UP(nir->info.task_payload_size, 4), 8);
 }
@@ -365,7 +365,7 @@ brw_nir_lower_tue_inputs(nir_shader *nir, const brw_tue_map *map)
       nir->info.task_payload_size = 0;
    }
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_task_payload,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_task_payload, false,
             nir_address_format_32bit_offset);
 }
 

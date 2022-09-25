@@ -218,7 +218,7 @@ lower_rt_io_and_scratch(nir_shader *nir)
    NIR_PASS_V(nir, nir_lower_explicit_io,
               nir_var_function_temp |
               nir_var_mem_constant |
-              nir_var_ray_hit_attrib,
+              nir_var_ray_hit_attrib, false,
               nir_address_format_64bit_global);
 }
 

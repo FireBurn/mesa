@@ -818,7 +818,7 @@ parse_rt_stage(struct radv_device *device, const VkPipelineShaderStageCreateInfo
 
    NIR_PASS(_, shader, lower_rt_derefs);
 
-   NIR_PASS(_, shader, nir_lower_explicit_io, nir_var_function_temp,
+   NIR_PASS(_, shader, nir_lower_explicit_io, nir_var_function_temp, false,
             nir_address_format_32bit_offset);
 
    return shader;

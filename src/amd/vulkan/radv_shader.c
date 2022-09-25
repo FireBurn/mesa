@@ -1053,9 +1053,9 @@ radv_shader_spirv_to_nir(struct radv_device *device, const struct radv_pipeline_
    };
    NIR_PASS(_, nir, nir_opt_access, &opt_access_options);
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_push_const, nir_address_format_32bit_offset);
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_push_const, false, nir_address_format_32bit_offset);
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo, false,
             nir_address_format_vec2_index_32bit_offset);
 
    NIR_PASS(_, nir, lower_intrinsics, key);
@@ -1073,7 +1073,7 @@ radv_shader_spirv_to_nir(struct radv_device *device, const struct radv_pipeline_
       if (!nir->info.shared_memory_explicit_layout) {
          NIR_PASS(_, nir, nir_lower_vars_to_explicit_types, var_modes, shared_var_info);
       }
-      NIR_PASS(_, nir, nir_lower_explicit_io, var_modes, nir_address_format_32bit_offset);
+      NIR_PASS(_, nir, nir_lower_explicit_io, var_modes, false, nir_address_format_32bit_offset);
 
       if (nir->info.zero_initialize_shared_memory && nir->info.shared_size > 0) {
          const unsigned chunk_size = 16; /* max single store size */
@@ -1082,7 +1082,7 @@ radv_shader_spirv_to_nir(struct radv_device *device, const struct radv_pipeline_
       }
    }
 
-   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_global | nir_var_mem_constant,
+   NIR_PASS(_, nir, nir_lower_explicit_io, nir_var_mem_global | nir_var_mem_constant, false,
             nir_address_format_64bit_global);
 
    /* Lower large variables that are always constant with load_constant

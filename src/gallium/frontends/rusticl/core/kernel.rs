@@ -608,9 +608,10 @@ fn lower_and_optimize_nir_late(
         shared_address_format = nir_address_format::nir_address_format_32bit_offset_as_64bit;
     }
 
-    nir.pass2(
+    nir.pass3(
         nir_lower_explicit_io,
         nir_variable_mode::nir_var_mem_global | nir_variable_mode::nir_var_mem_constant,
+        false,
         global_address_format,
     );
     nir.pass0(nir_lower_system_values);
@@ -619,11 +620,12 @@ fn lower_and_optimize_nir_late(
     nir.pass1(nir_lower_compute_system_values, &compute_options);
 
     nir.pass1(rusticl_lower_intrinsics, &mut lower_state);
-    nir.pass2(
+    nir.pass3(
         nir_lower_explicit_io,
         nir_variable_mode::nir_var_mem_shared
             | nir_variable_mode::nir_var_function_temp
             | nir_variable_mode::nir_var_uniform,
+        false,
         shared_address_format,
     );
 

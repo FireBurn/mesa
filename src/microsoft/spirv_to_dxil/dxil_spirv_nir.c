@@ -653,7 +653,7 @@ dxil_spirv_nir_passes(nir_shader *nir,
               NULL);
 
    uint32_t push_constant_size = 0;
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_push_const,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_push_const, false,
               nir_address_format_32bit_offset);
    NIR_PASS_V(nir, dxil_spirv_nir_lower_load_push_constant,
               nir_address_format_32bit_index_offset,
@@ -661,14 +661,14 @@ dxil_spirv_nir_passes(nir_shader *nir,
               conf->push_constant_cbv.base_shader_register,
               &push_constant_size);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_ubo | nir_var_mem_ssbo, false,
               nir_address_format_32bit_index_offset);
 
    if (!nir->info.shared_memory_explicit_layout) {
       NIR_PASS_V(nir, nir_lower_vars_to_explicit_types, nir_var_mem_shared,
                  shared_var_info);
    }
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared, false,
       nir_address_format_32bit_offset_as_64bit);
 
    NIR_PASS_V(nir, nir_lower_clip_cull_distance_arrays);

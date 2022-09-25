@@ -2209,7 +2209,7 @@ lower_explicit_io_mode_check(nir_builder *b, nir_intrinsic_instr *intrin,
 
 static bool
 nir_lower_explicit_io_impl(nir_function_impl *impl, nir_variable_mode modes,
-                           nir_address_format addr_format)
+                           bool skip_samplers, nir_address_format addr_format)
 {
    bool progress = false;
 
@@ -2226,6 +2226,8 @@ nir_lower_explicit_io_impl(nir_function_impl *impl, nir_variable_mode modes,
          case nir_instr_type_deref: {
             nir_deref_instr *deref = nir_instr_as_deref(instr);
             if (nir_deref_mode_is_in_set(deref, modes)) {
+               if (glsl_type_is_sampler(deref->var->type) && skip_samplers)
+                  break;
                lower_explicit_io_deref(&b, deref, addr_format);
                progress = true;
             }
@@ -2356,13 +2358,13 @@ nir_lower_explicit_io_impl(nir_function_impl *impl, nir_variable_mode modes,
  */
 bool
 nir_lower_explicit_io(nir_shader *shader, nir_variable_mode modes,
-                      nir_address_format addr_format)
+                      bool skip_samplers, nir_address_format addr_format)
 {
    bool progress = false;
 
    nir_foreach_function(function, shader) {
       if (function->impl &&
-          nir_lower_explicit_io_impl(function->impl, modes, addr_format))
+          nir_lower_explicit_io_impl(function->impl, modes, skip_samplers, addr_format))
          progress = true;
    }
 

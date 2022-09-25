@@ -131,7 +131,7 @@ bool rogue_nir_passes(struct rogue_build_ctx *ctx,
    /* Additional I/O lowering. */
    NIR_PASS_V(nir,
               nir_lower_explicit_io,
-              nir_var_mem_ubo,
+              nir_var_mem_ubo, false,
               spirv_options.ubo_addr_format);
    NIR_PASS_V(nir, rogue_nir_lower_io, NULL);
 

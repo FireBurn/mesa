@@ -359,7 +359,7 @@ binary clover::nir::spirv_to_nir(const binary &mod, const device &dev,
                                              nir->constant_data_size,
                                              nir_var_mem_constant);
       }
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant, false,
                  spirv_options.constant_addr_format);
 
       auto args = sym.args;
@@ -380,20 +380,20 @@ binary clover::nir::spirv_to_nir(const binary &mod, const device &dev,
       NIR_PASS_V(nir, nir_lower_memcpy);
 
       /* use offsets for kernel inputs (uniform) */
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_uniform,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_uniform, false,
                  nir->info.cs.ptr_size == 64 ?
                  nir_address_format_32bit_offset_as_64bit :
                  nir_address_format_32bit_offset);
 
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_constant, false,
                  spirv_options.constant_addr_format);
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared, false,
                  spirv_options.shared_addr_format);
 
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_function_temp,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_function_temp, false,
                  spirv_options.temp_addr_format);
 
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_global,
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_global, false,
                  spirv_options.global_addr_format);
 
       struct nir_remove_dead_variables_options remove_dead_variables_options = {};

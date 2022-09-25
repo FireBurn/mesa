@@ -460,20 +460,20 @@ lvp_shader_compile_to_ir(struct lvp_pipeline *pipeline,
    NIR_PASS_V(nir, nir_split_var_copies);
    NIR_PASS_V(nir, nir_lower_global_vars_to_local);
 
-   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_push_const,
+   NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_push_const, false,
               nir_address_format_32bit_offset);
 
    NIR_PASS_V(nir, nir_lower_explicit_io,
-              nir_var_mem_ubo | nir_var_mem_ssbo,
+              nir_var_mem_ubo | nir_var_mem_ssbo, false,
               nir_address_format_32bit_index_offset);
 
    NIR_PASS_V(nir, nir_lower_explicit_io,
-              nir_var_mem_global,
+              nir_var_mem_global, false,
               nir_address_format_64bit_global);
 
    if (nir->info.stage == MESA_SHADER_COMPUTE) {
       NIR_PASS_V(nir, nir_lower_vars_to_explicit_types, nir_var_mem_shared, shared_var_info);
-      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared, nir_address_format_32bit_offset);
+      NIR_PASS_V(nir, nir_lower_explicit_io, nir_var_mem_shared, false, nir_address_format_32bit_offset);
    }
 
    NIR_PASS_V(nir, nir_remove_dead_variables, nir_var_shader_temp, NULL);
