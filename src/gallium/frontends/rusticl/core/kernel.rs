@@ -510,7 +510,7 @@ fn lower_and_optimize_nir_late(
     }
 
     nir.pass1(nir_lower_readonly_images_to_tex, false);
-    nir.pass1(nir_lower_cl_images, true);
+    nir.pass1(nir_lower_cl_images, !dev.images_as_deref());
 
     nir.reset_scratch_size();
     nir.pass2(
@@ -625,7 +625,7 @@ fn lower_and_optimize_nir_late(
         nir_variable_mode::nir_var_mem_shared
             | nir_variable_mode::nir_var_function_temp
             | nir_variable_mode::nir_var_uniform,
-        false,
+        dev.images_as_deref(),
         shared_address_format,
     );
 
