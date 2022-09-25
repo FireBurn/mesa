@@ -108,7 +108,7 @@ nir_dedup_inline_samplers(nir_shader *nir)
 }
 
 bool
-nir_lower_cl_images(nir_shader *shader)
+nir_lower_cl_images(nir_shader *shader, bool lower_deref)
 {
    nir_function_impl *impl = nir_shader_get_entrypoint(shader);
 
@@ -154,6 +154,12 @@ nir_lower_cl_images(nir_shader *shader)
 
    nir_builder b;
    nir_builder_init(&b, impl);
+
+   /* don't need any lowering if we can keep the derefs */
+   if (!lower_deref) {
+      nir_metadata_preserve(impl, nir_metadata_all);
+      return false;
+   }
 
    bool progress = false;
    nir_foreach_block_reverse(block, impl) {
