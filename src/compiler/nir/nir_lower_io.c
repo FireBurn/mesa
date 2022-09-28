@@ -925,7 +925,7 @@ static nir_ssa_def *
 build_addr_for_var(nir_builder *b, nir_variable *var,
                    nir_address_format addr_format)
 {
-   assert(var->data.mode & (nir_var_uniform | nir_var_mem_shared |
+   assert(var->data.mode & (nir_var_uniform | nir_var_image | nir_var_mem_shared |
                             nir_var_mem_task_payload |
                             nir_var_mem_global |
                             nir_var_shader_temp | nir_var_function_temp |

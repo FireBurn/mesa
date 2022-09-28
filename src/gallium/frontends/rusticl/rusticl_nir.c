@@ -39,6 +39,12 @@ rusticl_lower_intrinsics_instr(
         }
 
         val = intrins->src[0].ssa;
+
+        if (val->parent_instr->type == nir_instr_type_deref) {
+            nir_deref_instr *deref = nir_instr_as_deref(val->parent_instr);
+            val = nir_explicit_io_address_from_deref(b, deref, NULL, nir_address_format_32bit_offset_as_64bit);
+        }
+
         // we put write images after read images
         if (nir_intrinsic_access(intrins) & ACCESS_NON_WRITEABLE) {
             val = nir_iadd_imm(b, val, b->shader->info.num_textures);
