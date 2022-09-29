@@ -2600,6 +2600,11 @@ late_optimizations = [
    (('~feq', ('fadd(is_used_once)', a, b), 0.0), ('feq', a, ('fneg', b))),
    (('~fneu', ('fadd(is_used_once)', a, b), 0.0), ('fneu', a, ('fneg', b))),
 
+   (('imul_high@8' , a, b), ('i2i8',  ('ishr', ('imul', ('i2i32', a), ('i2i32', b)),  8))),
+   (('umul_high@8' , a, b), ('u2u8',  ('ushr', ('imul', ('u2u32', a), ('u2u32', b)),  8))),
+   (('imul_high@16', a, b), ('i2i16', ('ishr', ('imul', ('i2i32', a), ('i2i32', b)), 16))),
+   (('umul_high@16', a, b), ('u2u16', ('ushr', ('imul', ('u2u32', a), ('u2u32', b)), 16))),
+
    # If either source must be finite, then the original (a+b) cannot produce
    # NaN due to Inf-Inf.  The patterns and the replacements produce the same
    # result if b is NaN. Therefore, the replacements are exact.
