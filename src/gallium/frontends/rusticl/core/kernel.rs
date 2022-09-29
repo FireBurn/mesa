@@ -60,6 +60,7 @@ pub enum InternalKernelArgType {
     InlineSampler((cl_addressing_mode, cl_filter_mode, bool)),
     FormatArray,
     OrderArray,
+    WorkDim,
 }
 
 #[derive(Hash, PartialEq, Eq, Clone)]
@@ -211,6 +212,7 @@ impl InternalKernelArg {
             }
             InternalKernelArgType::FormatArray => bin.push(4),
             InternalKernelArgType::OrderArray => bin.push(5),
+            InternalKernelArgType::WorkDim => bin.push(6),
         }
 
         bin
@@ -232,6 +234,7 @@ impl InternalKernelArg {
             }
             4 => InternalKernelArgType::FormatArray,
             5 => InternalKernelArgType::OrderArray,
+            6 => InternalKernelArgType::WorkDim,
             _ => return None,
         };
 
@@ -588,6 +591,17 @@ fn lower_and_optimize_nir_late(
             "image_orders",
         );
     }
+    res.push(InternalKernelArg {
+        kind: InternalKernelArgType::WorkDim,
+        size: 1,
+        offset: 0,
+    });
+    lower_state.work_dim = nir.add_var(
+        nir_variable_mode::nir_var_uniform,
+        unsafe { glsl_uint8_t_type() },
+        args.len() + res.len() - 1,
+        "work_dim",
+    );
 
     nir.pass2(
         nir_lower_vars_to_explicit_types,
@@ -971,6 +985,9 @@ impl Kernel {
                 InternalKernelArgType::OrderArray => {
                     input.extend_from_slice(&cl_prop::<&Vec<u16>>(&tex_orders));
                     input.extend_from_slice(&cl_prop::<&Vec<u16>>(&img_orders));
+                }
+                InternalKernelArgType::WorkDim => {
+                    input.extend_from_slice(&[work_dim as u8; 1]);
                 }
             }
         }
