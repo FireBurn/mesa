@@ -536,8 +536,7 @@ impl Device {
     }
 
     pub fn const_max_size(&self) -> cl_ulong {
-        self.screen
-            .param(pipe_cap::PIPE_CAP_MAX_SHADER_BUFFER_SIZE_UINT) as u64
+        self.shader_param(pipe_shader_cap::PIPE_SHADER_CAP_MAX_CONST_BUFFER0_SIZE) as cl_ulong
     }
 
     pub fn device_type(&self, internal: bool) -> cl_device_type {
