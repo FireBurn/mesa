@@ -37,6 +37,7 @@
 extern "C" {
 #endif
 
+struct vk_acceleration_structure_build_ops;
 struct vk_command_buffer_ops;
 struct vk_device_shader_ops;
 struct vk_sync;
@@ -133,6 +134,40 @@ struct vk_device {
 
    /** Shader vtable for VK_EXT_shader_object and common pipelines */
    const struct vk_device_shader_ops *shader_ops;
+
+   /** Acceleration structure build vtable for common BVH building. */
+   const struct vk_acceleration_structure_build_ops *as_build_ops;
+
+   /**
+    * Write data to a buffer from the command processor. This is simpler than
+    * setting up a staging buffer and faster for small writes, but is not
+    * meant for larger amounts of data. \p data is owned by the caller and the
+    * driver is expected to write it out directly to the command stream as
+    * part of an immediate write packet.
+    */
+   void (*write_buffer_cp)(VkCommandBuffer cmdbuf, VkDeviceAddress addr,
+                           void *data, uint32_t size);
+
+   /* Flush data written via write_buffer_cp. Users must use a normal pipeline
+    * barrier in order to read this data, with the appropriate destination
+    * access, but this replaces the source access mask.
+    */
+   void (*flush_buffer_write_cp)(VkCommandBuffer cmdbuf);
+
+   /* An unaligned dispatch function. This launches a number of threads that
+    * may not be a multiple of the workgroup size, which may result in partial
+    * workgroups.
+    */
+   void (*cmd_dispatch_unaligned)(VkCommandBuffer cmdbuf,
+                                  uint32_t invocations_x,
+                                  uint32_t invocations_y,
+                                  uint32_t invocations_z);
+
+   /* vkCmdFillBuffer but with a device address. */
+   void (*cmd_fill_buffer_addr)(VkCommandBuffer cmdbuf,
+                                VkDeviceAddress devAddr,
+                                VkDeviceSize size,
+                                uint32_t data);
 
    /** Driver provided callback for capturing traces
     * 
