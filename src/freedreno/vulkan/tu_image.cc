@@ -635,7 +635,6 @@ tu_image_init(struct tu_device *device, struct tu_image *image,
       image->lrz_pitch = lrz_pitch;
       image->lrz_offset = image->total_size;
       unsigned lrz_size = lrz_pitch * lrz_height * 2;
-      image->total_size += lrz_size;
 
       unsigned nblocksx = DIV_ROUND_UP(DIV_ROUND_UP(width, 8), 16);
       unsigned nblocksy = DIV_ROUND_UP(DIV_ROUND_UP(height, 8), 4);
@@ -644,21 +643,26 @@ tu_image_init(struct tu_device *device, struct tu_image *image,
       image->lrz_fc_size = DIV_ROUND_UP(nblocksx * nblocksy, 8);
 
       /* Fast-clear buffer cannot be larger than 512 bytes (HW limitation) */
-      bool has_lrz_fc = image->lrz_fc_size <= 512 &&
+      bool has_lrz_fc =
          device->physical_device->info->a6xx.enable_lrz_fast_clear &&
+         image->lrz_fc_size <= device->physical_device->info->a6xx.lrz_fast_clear_max_size &&
          !TU_DEBUG(NOLRZFC);
 
+      mesa_logi("lrz: %ux%u, pitch %u, size %u, fc %u < %u", lrz_pitch, lrz_height, lrz_pitch, lrz_size, image->lrz_fc_size, device->physical_device->info->a6xx.lrz_fast_clear_max_size);
+
       if (has_lrz_fc || device->physical_device->info->a6xx.has_lrz_dir_tracking) {
-         image->lrz_fc_offset = image->total_size;
-         image->total_size += 512;
+         image->lrz_fc_offset = image->total_size + lrz_size;
+         lrz_size += 512;
 
          if (device->physical_device->info->a6xx.has_lrz_dir_tracking) {
             /* Direction tracking uses 1 byte */
-            image->total_size += 1;
+            lrz_size += 1;
             /* GRAS_LRZ_DEPTH_VIEW needs 5 bytes: 4 for view data and 1 for padding */
-            image->total_size += 5;
+            lrz_size += 5;
          }
       }
+
+      image->total_size += lrz_size * 5;
 
       if (!has_lrz_fc) {
          image->lrz_fc_size = 0;

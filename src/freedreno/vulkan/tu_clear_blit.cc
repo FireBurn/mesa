@@ -1340,7 +1340,7 @@ r3d_dst(struct tu_cs *cs, const struct fdl6_view *iview, uint32_t layer,
    tu_cs_image_flag_ref(cs, iview, layer);
 
    if (CHIP >= A7XX)
-      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(0));
+      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = DEPTH6_NONE));
 
    /* Use color format from RB_MRT_BUF_INFO. This register is relevant for
     * FMT6_NV12_Y.
@@ -3246,7 +3246,7 @@ tu_CmdClearAttachments(VkCommandBuffer commandBuffer,
       if ((pAttachments[j].aspectMask & VK_IMAGE_ASPECT_DEPTH_BIT) == 0)
          continue;
 
-      tu_lrz_disable_during_renderpass(cmd);
+      tu_lrz_disable_during_renderpass<CHIP>(cmd);
    }
 
    /* vkCmdClearAttachments is supposed to respect the predicate if active. The
