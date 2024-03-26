@@ -137,7 +137,7 @@ struct fd_dev_info {
        * https://gitlab.freedesktop.org/mesa/mesa/-/issues/6829
        */
       bool enable_lrz_fast_clear;
-      uint32_t lrz_fast_clear_max_size;
+      uint32_t lrz_fast_clear_size;
       bool has_lrz_dir_tracking;
       bool lrz_track_quirk;
 

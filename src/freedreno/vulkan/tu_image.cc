@@ -21,6 +21,7 @@
 #include "tu_descriptor_set.h"
 #include "tu_device.h"
 #include "tu_formats.h"
+#include "tu_lrz.h"
 #include "tu_rmv.h"
 
 uint32_t
@@ -428,6 +429,7 @@ format_list_has_swaps(const VkImageFormatListCreateInfo *fmt_list)
    return false;
 }
 
+template <chip CHIP>
 static VkResult
 tu_image_init(struct tu_device *device, struct tu_image *image,
               const VkImageCreateInfo *pCreateInfo, uint64_t modifier,
@@ -634,45 +636,38 @@ tu_image_init(struct tu_device *device, struct tu_image *image,
       image->lrz_height = lrz_height;
       image->lrz_pitch = lrz_pitch;
       image->lrz_offset = image->total_size;
-      unsigned lrz_size = lrz_pitch * lrz_height * 2;
+
+      /* Since A7XX, the format of the LRZ buffer can be set by the driver. It's fixed to D16 for A6XX. */
+      unsigned format_size = CHIP >= A7XX ? util_format_get_blocksize(desc->format) : sizeof(uint16_t);
+      unsigned lrz_size = lrz_pitch * lrz_height * format_size;
 
       unsigned nblocksx = DIV_ROUND_UP(DIV_ROUND_UP(width, 8), 16);
       unsigned nblocksy = DIV_ROUND_UP(DIV_ROUND_UP(height, 8), 4);
 
       /* Fast-clear buffer is 1bit/block */
-      image->lrz_fc_size = DIV_ROUND_UP(nblocksx * nblocksy, 8);
+      unsigned lrz_fc_size = DIV_ROUND_UP(nblocksx * nblocksy, 8);
 
-      /* Fast-clear buffer cannot be larger than 512 bytes (HW limitation) */
-      bool has_lrz_fc =
+      /* Fast-clear buffer cannot be larger than 512 bytes on A6XX and 1024 bytes on A7XX (HW limitation) */
+      image->has_lrz_fc =
          device->physical_device->info->a6xx.enable_lrz_fast_clear &&
-         image->lrz_fc_size <= device->physical_device->info->a6xx.lrz_fast_clear_max_size &&
+         lrz_fc_size <= device->physical_device->info->a6xx.lrz_fast_clear_size &&
          !TU_DEBUG(NOLRZFC);
 
-      mesa_logi("lrz: %ux%u, pitch %u, size %u, fc %u < %u", lrz_pitch, lrz_height, lrz_pitch, lrz_size, image->lrz_fc_size, device->physical_device->info->a6xx.lrz_fast_clear_max_size);
+      mesa_logi("lrz: %ux%u, pitch %u, size %u, fc %u < %u", lrz_pitch, lrz_height, lrz_pitch, lrz_size, lrz_fc_size, device->physical_device->info->a6xx.lrz_fast_clear_size);
 
-      if (has_lrz_fc || device->physical_device->info->a6xx.has_lrz_dir_tracking) {
+      if (image->has_lrz_fc || device->physical_device->info->a6xx.has_lrz_dir_tracking) {
          image->lrz_fc_offset = image->total_size + lrz_size;
-         lrz_size += 512;
-
-         if (device->physical_device->info->a6xx.has_lrz_dir_tracking) {
-            /* Direction tracking uses 1 byte */
-            lrz_size += 1;
-            /* GRAS_LRZ_DEPTH_VIEW needs 5 bytes: 4 for view data and 1 for padding */
-            lrz_size += 5;
-         }
+         lrz_size += sizeof(tu_lrzfc_layout<CHIP>);
       }
 
-      image->total_size += lrz_size * 5;
-
-      if (!has_lrz_fc) {
-         image->lrz_fc_size = 0;
-      }
+      image->total_size += lrz_size;
    } else {
       image->lrz_height = 0;
    }
 
    return VK_SUCCESS;
 }
+TU_GENX(tu_image_init);
 
 VKAPI_ATTR VkResult VKAPI_CALL
 tu_CreateImage(VkDevice _device,
@@ -730,8 +725,8 @@ tu_CreateImage(VkDevice _device,
    }
 #endif
 
-   VkResult result = tu_image_init(device, image, pCreateInfo, modifier,
-                                   plane_layouts);
+   VkResult result = TU_CALLX(device, tu_image_init)(device, image, pCreateInfo,
+                              modifier, plane_layouts);
    if (result != VK_SUCCESS) {
       vk_object_free(&device->vk, alloc, image);
       return result;
@@ -835,8 +830,8 @@ tu_GetDeviceImageMemoryRequirements(
 
    struct tu_image image = {0};
 
-   tu_image_init(device, &image, pInfo->pCreateInfo, DRM_FORMAT_MOD_INVALID,
-                 NULL);
+   TU_CALLX(device, tu_image_init)(device, &image, pInfo->pCreateInfo,
+            DRM_FORMAT_MOD_INVALID, NULL);
 
    tu_get_image_memory_requirements(device, &image, pMemoryRequirements);
 }
@@ -900,8 +895,8 @@ tu_GetDeviceImageSubresourceLayoutKHR(VkDevice _device,
 
    struct tu_image image = {0};
 
-   tu_image_init(device, &image, pInfo->pCreateInfo, DRM_FORMAT_MOD_INVALID,
-                 NULL);
+   TU_CALLX(device, tu_image_init)(device, &image, pInfo->pCreateInfo,
+            DRM_FORMAT_MOD_INVALID, NULL);
 
    tu_get_image_subresource_layout(&image, pInfo->pSubresource, pLayout);
 }

@@ -167,7 +167,7 @@ tu_lrz_init_state(struct tu_cmd_buffer *cmd,
    /* Be optimistic and unconditionally enable fast-clear in
     * secondary cmdbufs and when reusing previous LRZ state.
     */
-   cmd->state.lrz.fast_clear = view->image->lrz_fc_size > 0;
+   cmd->state.lrz.fast_clear = view->image->has_lrz_fc;
 
    cmd->state.lrz.gpu_dir_tracking = has_gpu_tracking;
    cmd->state.lrz.reuse_previous_state = !clears_depth;
@@ -366,7 +366,7 @@ tu_lrz_tiling_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
        * TODO: we could avoid this if we don't store depth and don't
        * expect secondary cmdbufs.
        */
-      if (lrz->image_view->image->lrz_fc_size) {
+      if (lrz->image_view->image->has_lrz_fc) {
          tu6_dirty_lrz_fc<CHIP>(cmd, cs, lrz->image_view->image);
       }
    }
@@ -508,9 +508,9 @@ tu_lrz_clear_depth_image(struct tu_cmd_buffer *cmd,
    /* A7XX supports fast-clearing to any value, while A6XX only supports
     * 0.0 and 1.0.
     */
-   bool fast_clear = image->lrz_fc_size && (CHIP >= A7XX ||
-                                            pDepthStencil->depth == 0.f ||
-                                            pDepthStencil->depth == 1.f);
+   bool fast_clear = image->has_lrz_fc && (CHIP >= A7XX ||
+                                           pDepthStencil->depth == 0.f ||
+                                           pDepthStencil->depth == 1.f);
 
    tu6_emit_lrz_buffer<CHIP>(&cmd->cs, image);
 

@@ -328,7 +328,7 @@ a6xx_base = A6XXProps(
         prim_alloc_threshold = 0x7,
         vs_max_inputs_count = 32,
         max_sets = 5,
-        lrz_fast_clear_max_size = 512,
+        lrz_fast_clear_size = 512,
         line_width_min = 1.0,
         line_width_max = 1.0,
     )
@@ -787,7 +787,7 @@ a7xx_base = A6XXProps(
         has_dp2acc = True,
         has_dp4acc = True,
         enable_lrz_fast_clear = True,
-        lrz_fast_clear_max_size = 1024,
+        lrz_fast_clear_size = 1024,
         has_lrz_dir_tracking = True,
         has_per_view_viewport = True,
         supports_ibo_ubwc = True,

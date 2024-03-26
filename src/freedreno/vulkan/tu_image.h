@@ -41,7 +41,7 @@ struct tu_image
    uint32_t lrz_pitch;
    uint32_t lrz_offset;
    uint32_t lrz_fc_offset;
-   uint32_t lrz_fc_size;
+   bool has_lrz_fc;
 };
 VK_DEFINE_NONDISP_HANDLE_CASTS(tu_image, vk.base, VkImage, VK_OBJECT_TYPE_IMAGE)
 
