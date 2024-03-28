@@ -994,6 +994,7 @@ add_gpus([
             # Shading rate group
             [A6XXRegs.REG_A6XX_RB_UNKNOWN_88F4,   0x00000000],
             [A6XXRegs.REG_A7XX_HLSQ_UNKNOWN_A9AD, 0x00000000],
+            [A6XXRegs.REG_A7XX_GRAS_UNKNOWN_8008, 0x00000000],
             [A6XXRegs.REG_A7XX_GRAS_UNKNOWN_80F4, 0x00000000],
         ],
     ))
@@ -1068,6 +1069,7 @@ add_gpus([
             # Shading rate group
             [A6XXRegs.REG_A6XX_RB_UNKNOWN_88F4,   0x00000000],
             [A6XXRegs.REG_A7XX_HLSQ_UNKNOWN_A9AD, 0x00000000],
+            [A6XXRegs.REG_A7XX_GRAS_UNKNOWN_8008, 0x00000000],
             [A6XXRegs.REG_A7XX_GRAS_UNKNOWN_80F4, 0x00000000],
 
             [0x930a, 0],
