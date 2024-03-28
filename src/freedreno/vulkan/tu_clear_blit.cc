@@ -1340,7 +1340,7 @@ r3d_dst(struct tu_cs *cs, const struct fdl6_view *iview, uint32_t layer,
    tu_cs_image_flag_ref(cs, iview, layer);
 
    if (CHIP >= A7XX)
-      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(0));
+      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = DEPTH6_NONE));
 
    /* Use color format from RB_MRT_BUF_INFO. This register is relevant for
     * FMT6_NV12_Y.
@@ -1753,13 +1753,16 @@ tu6_clear_lrz(struct tu_cmd_buffer *cmd,
     */
    tu_emit_event_write<CHIP>(cmd, &cmd->cs, FD_CACHE_FLUSH);
 
-   ops->setup(cmd, cs, PIPE_FORMAT_Z16_UNORM, PIPE_FORMAT_Z16_UNORM,
+   pipe_format format = CHIP >= A7XX ? image->layout[0].format : PIPE_FORMAT_Z16_UNORM;
+   unsigned format_size = util_format_get_blocksize(format);
+
+   ops->setup(cmd, cs, format, format,
               VK_IMAGE_ASPECT_DEPTH_BIT, 0, true, false,
               VK_SAMPLE_COUNT_1_BIT);
-   ops->clear_value(cmd, cs, PIPE_FORMAT_Z16_UNORM, value);
-   ops->dst_buffer(cs, PIPE_FORMAT_Z16_UNORM,
+   ops->clear_value(cmd, cs, format, value);
+   ops->dst_buffer(cs, format,
                    image->iova + image->lrz_offset,
-                   image->lrz_pitch * 2, PIPE_FORMAT_Z16_UNORM);
+                   image->lrz_pitch * format_size, format);
    ops->coords(cmd, cs, (VkOffset2D) {}, blt_no_coord,
                (VkExtent2D) { image->lrz_pitch, image->lrz_height });
    ops->run(cmd, cs);

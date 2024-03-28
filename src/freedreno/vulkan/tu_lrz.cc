@@ -62,7 +62,7 @@ tu6_emit_lrz_buffer(struct tu_cs *cs, struct tu_image *depth_image)
                       A6XX_GRAS_LRZ_FAST_CLEAR_BUFFER_BASE(0));
 
       if (CHIP >= A7XX)
-         tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(0));
+         tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = DEPTH6_NONE));
 
       return;
    }
@@ -78,8 +78,7 @@ tu6_emit_lrz_buffer(struct tu_cs *cs, struct tu_image *depth_image)
                    A6XX_GRAS_LRZ_FAST_CLEAR_BUFFER_BASE(.qword = lrz_fc_iova));
 
    if (CHIP >= A7XX)
-      // TODO: Figure out the correct value to set here.
-      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(0));
+      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = tu6_pipe2depth(depth_image->vk.format)));
 }
 
 template <chip CHIP>
@@ -125,8 +124,9 @@ tu6_disable_lrz_via_depth_view(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
       .disable_on_wrong_dir = true,
    ));
 
-   tu_emit_event_write<A6XX>(cmd, cs, FD_LRZ_CLEAR);
-   tu_emit_event_write<A6XX>(cmd, cs, FD_LRZ_FLUSH);
+   if (CHIP >= A7XX) {
+      tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = DEPTH6_NONE));
+   }
 }
 
 static void
@@ -317,6 +317,8 @@ tu_lrz_tiling_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 
       tu6_write_lrz_reg<CHIP>(cmd, cs,
          A6XX_GRAS_LRZ_DEPTH_VIEW(.dword = lrz->image_view->view.GRAS_LRZ_DEPTH_VIEW));
+      if (CHIP >= A7XX)
+         tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = tu6_pipe2depth(lrz->image_view->image->vk.format)));
       return;
    }
 
@@ -420,6 +422,8 @@ tu_lrz_sysmem_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
       /* Make sure depth view comparison will fail. */
       tu6_write_lrz_reg<CHIP>(cmd, cs,
          A6XX_GRAS_LRZ_DEPTH_VIEW(.dword = 0));
+      if (CHIP >= A7XX)
+         tu_cs_emit_regs(&cmd->cs, A7XX_GRAS_LRZ_DEPTH_BUFFER_INFO(.depth_format = DEPTH6_NONE));
    } else {
       tu6_emit_lrz_buffer<CHIP>(cs, lrz->image_view->image);
       /* Even though we disable LRZ writes in sysmem mode - there is still
