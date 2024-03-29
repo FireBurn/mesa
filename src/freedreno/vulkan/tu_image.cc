@@ -21,6 +21,7 @@
 #include "tu_descriptor_set.h"
 #include "tu_device.h"
 #include "tu_formats.h"
+#include "tu_lrz.h"
 #include "tu_rmv.h"
 
 uint32_t
@@ -644,28 +645,20 @@ tu_image_init(struct tu_device *device, struct tu_image *image,
       unsigned nblocksy = DIV_ROUND_UP(DIV_ROUND_UP(height, 8), 4);
 
       /* Fast-clear buffer is 1bit/block */
-      image->lrz_fc_size = DIV_ROUND_UP(nblocksx * nblocksy, 8);
+      unsigned lrz_fc_size = DIV_ROUND_UP(nblocksx * nblocksy, 8);
 
-      /* Fast-clear buffer cannot be larger than 512 bytes (HW limitation) */
-      bool has_lrz_fc = image->lrz_fc_size <= 512 &&
+      /* Fast-clear buffer cannot be larger than 512 bytes on A6XX and 1024 bytes on A7XX (HW limitation) */
+      image->has_lrz_fc =
          device->physical_device->info->a6xx.enable_lrz_fast_clear &&
+         lrz_fc_size <= tu_lrzfc_layout<CHIP>::FC_SIZE &&
          !TU_DEBUG(NOLRZFC);
 
-      if (has_lrz_fc || device->physical_device->info->a6xx.has_lrz_dir_tracking) {
-         image->lrz_fc_offset = image->total_size;
-         image->total_size += 512;
-
-         if (device->physical_device->info->a6xx.has_lrz_dir_tracking) {
-            /* Direction tracking uses 1 byte */
-            image->total_size += 1;
-            /* GRAS_LRZ_DEPTH_VIEW needs 5 bytes: 4 for view data and 1 for padding */
-            image->total_size += 5;
-         }
+      if (image->has_lrz_fc || device->physical_device->info->a6xx.has_lrz_dir_tracking) {
+         image->lrz_fc_offset = image->total_size + lrz_size;
+         lrz_size += sizeof(tu_lrzfc_layout<CHIP>);
       }
 
-      if (!has_lrz_fc) {
-         image->lrz_fc_size = 0;
-      }
+      image->total_size += lrz_size;
    } else {
       image->lrz_height = 0;
    }
