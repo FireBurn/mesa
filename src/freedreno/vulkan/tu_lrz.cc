@@ -348,6 +348,8 @@ tu_lrz_tiling_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
        * LRZ_CLEAR.disable_on_wrong_dir + LRZ_CLEAR - sets direction to
        *  CUR_DIR_UNSET.
        */
+      if (CHIP >= A7XX)
+         tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_CLEAR_DEPTH_F32(lrz->depth_clear_value.depthStencil.depth));
       tu_emit_event_write<CHIP>(cmd, cs, FD_LRZ_CLEAR);
    }
 
@@ -434,6 +436,9 @@ tu_lrz_sysmem_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
             .enable = true,
             .fc_enable = true,
          ));
+
+         if (CHIP >= A7XX)
+            tu_cs_emit_regs(cs, A7XX_GRAS_LRZ_CLEAR_DEPTH_F32(lrz->depth_clear_value.depthStencil.depth));
          tu_emit_event_write<CHIP>(cmd, &cmd->cs, FD_LRZ_CLEAR);
          tu_emit_event_write<CHIP>(cmd, &cmd->cs, FD_LRZ_FLUSH);
       } else {
@@ -496,8 +501,10 @@ tu_lrz_clear_depth_image(struct tu_cmd_buffer *cmd,
    if (!range)
       return;
 
-   bool fast_clear = image->has_lrz_fc && (pDepthStencil->depth == 0.f ||
-                                            pDepthStencil->depth == 1.f);
+   /* A7XX supports fast-clearing to any value, while A6XX only supports 0.0/1.0 */
+   bool fast_clear = image->has_lrz_fc && (CHIP >= A7XX ||
+                                           pDepthStencil->depth == 0.f ||
+                                           pDepthStencil->depth == 1.f);
 
    tu6_emit_lrz_buffer<CHIP>(&cmd->cs, image);
 
@@ -513,6 +520,8 @@ tu_lrz_clear_depth_image(struct tu_cmd_buffer *cmd,
       .disable_on_wrong_dir = true,
    ));
 
+   if (CHIP >= A7XX)
+      tu_cs_emit_regs(&cmd->cs, A7XX_GRAS_LRZ_CLEAR_DEPTH_F32(pDepthStencil->depth));
    tu_emit_event_write<CHIP>(cmd, &cmd->cs, FD_LRZ_CLEAR);
    tu_emit_event_write<CHIP>(cmd, &cmd->cs, FD_LRZ_FLUSH);
 
