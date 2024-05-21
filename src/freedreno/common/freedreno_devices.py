@@ -858,7 +858,7 @@ a730_magic_regs = dict(
 
 a730_raw_magic_regs = [
         [A6XXRegs.REG_A6XX_UCHE_CACHE_WAYS, 0x00840004],
-        [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00000724],
+        [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00040724],
 
         [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE08, 0x00002400],
         [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE09, 0x00000000],
@@ -973,7 +973,7 @@ add_gpus([
         ),
         raw_magic_regs = [
             [A6XXRegs.REG_A6XX_UCHE_CACHE_WAYS, 0x00040004],
-            [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00000724],
+            [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00040724],
 
             [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE08, 0x00000400],
             [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE09, 0x00430800],
@@ -1059,7 +1059,7 @@ add_gpus([
         ),
         raw_magic_regs = [
             [A6XXRegs.REG_A6XX_UCHE_CACHE_WAYS, 0x00040004],
-            [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00000700],
+            [A6XXRegs.REG_A6XX_TPL1_DBG_ECO_CNTL1, 0x00040700],
 
             [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE08, 0x00400400],
             [A6XXRegs.REG_A7XX_SP_UNKNOWN_AE09, 0x00430820],
