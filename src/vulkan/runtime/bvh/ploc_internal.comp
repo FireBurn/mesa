@@ -52,6 +52,7 @@ layout(push_constant) uniform CONSTS
 
 shared uint32_t exclusive_prefix_sum;
 shared uint32_t aggregate_sums[PLOC_WORKGROUP_SIZE / SUBGROUP_SIZE];
+shared uint32_t aggregate_sums2[PLOC_WORKGROUP_SIZE / SUBGROUP_SIZE];
 
 /*
  * Global prefix scan over all workgroups to find out the index of the collapsed node to write.
@@ -93,8 +94,16 @@ prefix_scan(uvec4 ballot, REF(ploc_prefix_scan_partition) partitions, uint32_t t
    barrier();
 
    if (gl_LocalInvocationID.x < PLOC_WORKGROUP_SIZE / SUBGROUP_SIZE) {
-      aggregate_sums[gl_LocalInvocationID.x] =
-         exclusive_prefix_sum + subgroupExclusiveAdd(aggregate_sums[gl_LocalInvocationID.x]);
+      if (PLOC_WORKGROUP_SIZE <= SUBGROUP_SIZE * SUBGROUP_SIZE) {
+         aggregate_sums[gl_LocalInvocationID.x] =
+            exclusive_prefix_sum + subgroupExclusiveAdd(aggregate_sums[gl_LocalInvocationID.x]);
+      } else {
+         aggregate_sums2[gl_LocalInvocationID.x] = aggregate_sums[gl_LocalInvocationID.x];
+         uint32_t sum = exclusive_prefix_sum;
+         for (int32_t i = int32_t(gl_LocalInvocationID.x) - 1; i >= 0; i--)
+            sum += aggregate_sums2[i];
+         aggregate_sums[gl_LocalInvocationID.x] = sum;
+      }
    }
    barrier();
 
