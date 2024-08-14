@@ -64,7 +64,7 @@ bvh_spv = []
 foreach s : bvh_shaders
   command = [
     prog_glslang, '-V', '-I' + vk_bvh_include_dir, '--target-env', 'spirv1.5', '-x', '-o', '@OUTPUT@', '@INPUT@'
-  ]
+  ] + (with_mesa_debug ? ['-g'] : [])
   command += glslang_quiet
 
   foreach define : s[2]

@@ -46,6 +46,8 @@ foreach s : radix_sort_shaders
     s + '.spv.h',
     input : s,
     output : s + '.spv.h',
-    command : [prog_glslang, '-V', '--target-env', 'spirv1.5', '-x', '-o', '@OUTPUT@', '@INPUT@'] + defines + glslang_quiet,
+    command : [
+      prog_glslang, '-V', '--target-env', 'spirv1.5', '-x', '-o', '@OUTPUT@', '@INPUT@'
+    ] + defines + glslang_quiet + (with_mesa_debug ? ['-g'] : []),
     depend_files: shader_include_files)
 endforeach
