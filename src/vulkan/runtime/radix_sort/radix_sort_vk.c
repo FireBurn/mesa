@@ -104,13 +104,40 @@ radix_sort_vk_get_memory_requirements(radix_sort_vk_t const *               rs,
       // NOTE: Assumes .histograms are before .partitions.
       //
       // Last scatter workgroup skips writing to a partition.
+      // Each RS_RADIX_LOG2 (8) bit pass has a zero-initialized histogram. This
+      // is one RS_RADIX_SIZE histogram per keyval byte.
       //
-      // One histogram per (keyval byte + partitions)
+      // The last scatter workgroup skips writing to a partition so it doesn't
+      // need to be allocated.
       //
-      uint32_t const partitions = scatter_blocks - 1;
+      // If the device doesn't support "sequential dispatch" of workgroups, then
+      // we need a zero-initialized dword counter per radix pass in the keyval
+      // to atomically acquire a virtual workgroup id.  On sequentially
+      // dispatched devices, this is simply `gl_WorkGroupID.x`.
+      //
+      // The "internal" memory map looks like this:
+      //
+      //   +---------------------------------+ <-- 0
+      //   | histograms[keyval_size]         |
+      //   +---------------------------------+ <-- keyval_size                           * histo_size
+      //   | partitions[scatter_blocks_ru-1] |
+      //   +---------------------------------+ <-- (keyval_size + scatter_blocks_ru - 1) * histo_size
+      //   | workgroup_ids[keyval_size]      |
+      //   +---------------------------------+ <-- (keyval_size + scatter_blocks_ru - 1) * histo_size + workgroup_ids_size
+      //
+      // The `.workgroup_ids[]` are located after the last partition.
+      //
+      VkDeviceSize const histo_size = RS_RADIX_SIZE * sizeof(uint32_t);
 
-      mr->internal_size      = (mr->keyval_size + partitions) * (RS_RADIX_SIZE * sizeof(uint32_t));
+      mr->internal_size      = (mr->keyval_size + scatter_blocks - 1) * histo_size;
       mr->internal_alignment = internal_sg_size * sizeof(uint32_t);
+
+      //
+      // Support for nonsequential dispatch can be disabled.
+      //
+      VkDeviceSize const workgroup_ids_size = mr->keyval_size * sizeof(uint32_t);
+
+      mr->internal_size += workgroup_ids_size;
 
       //
       // Indirect
@@ -263,6 +290,7 @@ radix_sort_vk_create(VkDevice                           _device,
     [RS_SCATTER_WORKGROUP_SIZE] = 1u << config.scatter.workgroup_size_log2,
     [RS_SCATTER_SUBGROUP_SIZE_LOG2] = config.scatter.subgroup_size_log2,
     [RS_SCATTER_BLOCK_ROWS] = config.scatter.block_rows,
+    [RS_SCATTER_NONSEQUENTIAL_DISPATCH] = config.nonsequential_dispatch,
   };
 
   VkSpecializationMapEntry spec_map[ARRAY_LENGTH_MACRO(spec_constants)];

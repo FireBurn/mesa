@@ -665,7 +665,7 @@ morton_sort(VkCommandBuffer commandBuffer, struct vk_device *device,
 
       device->cmd_fill_buffer_addr(commandBuffer, 
                                    internal_addr + rs->internal.histograms.offset + fill_base,
-                                   histo_partition_count * (RS_RADIX_SIZE * sizeof(uint32_t)), 0);
+                                   histo_partition_count * (RS_RADIX_SIZE * sizeof(uint32_t)) + keyval_bytes * sizeof(uint32_t), 0);
    }
 
    /*

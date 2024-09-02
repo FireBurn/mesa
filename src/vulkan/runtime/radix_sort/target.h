@@ -49,6 +49,8 @@ struct radix_sort_vk_target_config
     uint32_t subgroup_size_log2;
     uint32_t block_rows;
   } scatter;
+
+  bool nonsequential_dispatch;
 };
 
 //

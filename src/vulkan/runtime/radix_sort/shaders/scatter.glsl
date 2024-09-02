@@ -339,6 +339,17 @@ invocation_id()
 #define RS_PREFIX_STORE(idx_)  smem.extent[RS_SMEM_HISTOGRAM_OFFSET + invocation_id() + (idx_)]
 // clang-format on
 
+layout(buffer_reference, std430) buffer buffer_rs_workgroup_id
+{
+  uint32_t x[RS_KEYVAL_DWORDS * 4];
+};
+
+#define RS_IS_FIRST_LOCAL_INVOCATION() (RS_WORKGROUP_SUBGROUPS == 1 ? gl_SubgroupInvocationID == 0 : gl_LocalInvocationID.x == 0)
+
+RS_SUBGROUP_UNIFORM uint32_t rs_gl_workgroup_id_x;
+
+#define RS_GL_WORKGROUP_ID_X (RS_SCATTER_NONSEQUENTIAL_DISPATCH != 0 ? rs_gl_workgroup_id_x : gl_WorkGroupID.x)
+
 //
 // Load the prefix function
 //
@@ -1343,7 +1354,7 @@ rs_load(out RS_KEYVAL_TYPE kv[RS_SCATTER_BLOCK_ROWS])
   //
   // Set up buffer reference
   //
-  const uint32_t kv_in_offset_keys = gl_WorkGroupID.x * RS_BLOCK_KEYVALS +
+  const uint32_t kv_in_offset_keys = RS_GL_WORKGROUP_ID_X * RS_BLOCK_KEYVALS +
                                      gl_SubgroupID * RS_SUBGROUP_KEYVALS + gl_SubgroupInvocationID;
 
   u32vec2 kv_in_offset;
@@ -1415,6 +1426,58 @@ void
 main()
 {
   //
+  // If this is a nonsequential dispatch device then acquire a virtual
+  // workgroup id.
+  //
+  // This is only run once and is a special compile-time-enabled case
+  // so we leverage the existing `push.devaddr_partitions` address
+  // instead of altering the push constant structure definition.
+  //
+  if (RS_SCATTER_NONSEQUENTIAL_DISPATCH != 0)
+    {
+      if (RS_IS_FIRST_LOCAL_INVOCATION())
+        {
+          // The "internal" memory map looks like this:
+          //
+          //   +---------------------------------+ <-- 0
+          //   | histograms[keyval_size]         |
+          //   +---------------------------------+ <-- keyval_size                           * histo_size
+          //   | partitions[scatter_blocks_ru-1] |
+          //   +---------------------------------+ <-- (keyval_size + scatter_blocks_ru - 1) * histo_size
+          //   | workgroup_ids[keyval_size]      |
+          //   +---------------------------------+ <-- (keyval_size + scatter_blocks_ru - 1) * histo_size + workgroup_ids_size
+          //
+          // Extended multiply to avoid 4GB overflow
+          //
+          u32vec2 workgroup_id_offset;
+
+          umulExtended((gl_NumWorkGroups.x - 1),  // virtual workgroup ids follow partitions[]
+                       4 * RS_RADIX_SIZE,         // sizeof(uint32_t) * 256
+                       workgroup_id_offset.y,     // msb
+                       workgroup_id_offset.x);    // lsb
+
+          RS_BUFREF_DEFINE_AT_OFFSET_U32VEC2(buffer_rs_workgroup_id,
+                                             rs_workgroup_id,
+                                             push.devaddr_partitions,
+                                             workgroup_id_offset);
+
+          const uint32_t x_idx = RS_SCATTER_KEYVAL_DWORD_BASE * 4 + (push.pass_offset / RS_RADIX_LOG2);
+
+          smem.extent[0] = atomicAdd(rs_workgroup_id.x[x_idx],
+                                     1,
+                                     gl_ScopeQueueFamily,
+                                     gl_StorageSemanticsBuffer,
+                                     gl_SemanticsAcquireRelease);
+        }
+
+      rsBarrier();
+
+      rs_gl_workgroup_id_x = smem.extent[0];
+
+      rsBarrier();
+    }
+
+  //
   // Load keyvals
   //
   RS_KEYVAL_TYPE kv[RS_SCATTER_BLOCK_ROWS];
@@ -1452,7 +1515,7 @@ main()
 
     [[unroll]] for (uint32_t ii = 0; ii < RS_SCATTER_BLOCK_ROWS; ii++)
     {
-      rs_kv_out.extent[gl_WorkGroupID.x * RS_BLOCK_KEYVALS + ii * RS_WORKGROUP_SIZE] = kr[ii];
+      rs_kv_out.extent[RS_GL_WORKGROUP_ID_X * RS_BLOCK_KEYVALS + ii * RS_WORKGROUP_SIZE] = kr[ii];
     }
 
     return;
@@ -1488,7 +1551,7 @@ main()
       //
       // The first partition is a special case.
       //
-      if (gl_WorkGroupID.x == 0)
+      if (RS_GL_WORKGROUP_ID_X == 0)
         {
           //
           // Other workgroups may lookback on this partition.
@@ -1503,12 +1566,12 @@ main()
           //
           // Otherwise, this is not the first workgroup.
           //
-          RS_SUBGROUP_UNIFORM const uint32_t partition_base = gl_WorkGroupID.x * RS_RADIX_SIZE;
+          RS_SUBGROUP_UNIFORM const uint32_t partition_base = RS_GL_WORKGROUP_ID_X * RS_RADIX_SIZE;
 
           //
           // The last partition is a special case.
           //
-          if (gl_WorkGroupID.x + 1 < gl_NumWorkGroups.x)
+          if (RS_GL_WORKGROUP_ID_X + 1 < gl_NumWorkGroups.x)
             {
               //
               // Atomically store the reduction to the global partition.
