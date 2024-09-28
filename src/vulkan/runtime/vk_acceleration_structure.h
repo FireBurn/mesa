@@ -100,6 +100,22 @@ void vk_get_as_build_sizes(VkDevice _device, VkAccelerationStructureBuildTypeKHR
 
 bool vk_acceleration_struct_vtx_format_supported(VkFormat format);
 
+static inline VkGeometryTypeKHR
+vk_get_as_geometry_type(const VkAccelerationStructureBuildGeometryInfoKHR *build_info)
+{
+   if (build_info->geometryCount) {
+      if (build_info->pGeometries)
+         return build_info->pGeometries[0].geometryType;
+      else
+         return build_info->ppGeometries[0]->geometryType;
+   }
+
+   /* If there are no geometries, the geometry type shouldn't matter, but
+    * return something.
+    */
+   return VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+}
+
 #ifdef __cplusplus
 }
 #endif

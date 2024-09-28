@@ -193,22 +193,6 @@ build_config(uint32_t leaf_count,
    return config;
 }
 
-static VkGeometryTypeKHR
-get_as_geometry_type(const VkAccelerationStructureBuildGeometryInfoKHR *build_info)
-{
-   if (build_info->geometryCount) {
-      if (build_info->pGeometries)
-         return build_info->pGeometries[0].geometryType;
-      else
-         return build_info->ppGeometries[0]->geometryType;
-   }
-
-   /* If there are no geometries, the geometry type shouldn't matter, but
-    * return something.
-    */
-   return VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-}
-
 static void
 get_scratch_layout(struct vk_device *device,
                    uint32_t leaf_count,
@@ -225,7 +209,7 @@ get_scratch_layout(struct vk_device *device,
                                          &requirements);
 
    uint32_t ir_leaf_size;
-   switch (get_as_geometry_type(build_info)) {
+   switch (vk_get_as_geometry_type(build_info)) {
    case VK_GEOMETRY_TYPE_TRIANGLES_KHR:
       ir_leaf_size = sizeof(struct vk_ir_triangle_node);
       break;
@@ -1099,7 +1083,7 @@ vk_cmd_build_acceleration_structures(VkCommandBuffer commandBuffer,
 
             VK_FROM_HANDLE(vk_acceleration_structure, accel_struct, pInfos[i].dstAccelerationStructure);
 
-            VkGeometryTypeKHR geometry_type = get_as_geometry_type(&pInfos[i]);
+            VkGeometryTypeKHR geometry_type = vk_get_as_geometry_type(&pInfos[i]);
 
             if (update) {
                VK_FROM_HANDLE(vk_acceleration_structure, src, pInfos[i].srcAccelerationStructure);
@@ -1147,7 +1131,7 @@ vk_get_as_build_sizes(VkDevice _device, VkAccelerationStructureBuildTypeKHR buil
 
    pSizeInfo->accelerationStructureSize =
       device->as_build_ops->get_as_size(_device,
-                                        get_as_geometry_type(pBuildInfo),
+                                        vk_get_as_geometry_type(pBuildInfo),
                                         leaf_count);
    pSizeInfo->updateScratchSize = scratch.update_size;
    pSizeInfo->buildScratchSize = scratch.size;
