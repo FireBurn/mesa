@@ -331,17 +331,29 @@ get_pipeline_spv(struct vk_device *device, struct vk_meta_device *meta,
       .pCode = spv,
    };
 
-   VkSpecializationMapEntry spec_map = {
-      .constantID = SUBGROUP_SIZE_ID,
-      .offset = 0,
-      .size = sizeof(args->subgroup_size),
+   VkSpecializationMapEntry spec_map[2] = {
+      {
+         .constantID = SUBGROUP_SIZE_ID,
+         .offset = 0,
+         .size = sizeof(args->subgroup_size),
+      },
+      {
+         .constantID = BVH_BOUNDS_OFFSET_ID,
+         .offset = sizeof(args->subgroup_size),
+         .size = sizeof(args->bvh_bounds_offset),
+      },
+   };
+
+   uint32_t spec_constants[2] = {
+      args->subgroup_size,
+      args->bvh_bounds_offset
    };
 
    VkSpecializationInfo spec_info = {
-      .mapEntryCount = 1,
-      .pMapEntries = &spec_map,
-      .dataSize = sizeof(args->subgroup_size),
-      .pData = &args->subgroup_size,
+      .mapEntryCount = ARRAY_SIZE(spec_map),
+      .pMapEntries = spec_map,
+      .dataSize = sizeof(spec_constants),
+      .pData = spec_constants,
    };
 
    VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT rssci = {

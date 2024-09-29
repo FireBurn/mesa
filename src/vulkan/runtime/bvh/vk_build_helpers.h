@@ -259,29 +259,6 @@ pack_ir_node_id(uint32_t offset, uint32_t type)
    return offset | type;
 }
 
-vk_aabb
-calculate_instance_node_bounds(uint64_t base_ptr, mat3x4 otw_matrix)
-{
-   vk_aabb aabb;
-   // Note: We cast the acceleration structure pointer to an AABB, this means
-   // that the driver's BLAS must begin with the AABB for all of the
-   // geometries. We have to have this convention to avoid compiling multiple
-   // shaders for different drivers.
-   vk_aabb blas_aabb = DEREF(REF(vk_aabb)(base_ptr));
-
-   for (uint32_t comp = 0; comp < 3; ++comp) {
-      aabb.min[comp] = otw_matrix[comp][3];
-      aabb.max[comp] = otw_matrix[comp][3];
-      for (uint32_t col = 0; col < 3; ++col) {
-         aabb.min[comp] +=
-            min(otw_matrix[comp][col] * blas_aabb.min[col], otw_matrix[comp][col] * blas_aabb.max[col]);
-         aabb.max[comp] +=
-            max(otw_matrix[comp][col] * blas_aabb.min[col], otw_matrix[comp][col] * blas_aabb.max[col]);
-      }
-   }
-   return aabb;
-}
-
 float
 aabb_surface_area(vk_aabb aabb)
 {
