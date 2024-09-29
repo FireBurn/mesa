@@ -81,6 +81,7 @@ struct vk_acceleration_structure_build_ops {
 
 struct vk_acceleration_structure_build_args {
    uint32_t subgroup_size;
+   bool emit_markers;
    const radix_sort_vk_t *radix_sort;
 };
 
