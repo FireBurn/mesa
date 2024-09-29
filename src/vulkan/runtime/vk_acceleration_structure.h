@@ -51,7 +51,7 @@ VK_DEFINE_NONDISP_HANDLE_CASTS(vk_acceleration_structure, base, VkAccelerationSt
 
 struct vk_acceleration_structure_build_ops {
    VkDeviceSize (*get_as_size)(VkDevice device,
-                               VkGeometryTypeKHR geometry_type,
+                               const VkAccelerationStructureBuildGeometryInfoKHR *pBuildInfo,
                                uint32_t leaf_count);
    VkDeviceSize (*get_update_scratch_size)(struct vk_device *device, uint32_t leaf_count);
    uint32_t (*get_encode_key[MAX_ENCODE_PASSES])(VkAccelerationStructureTypeKHR type,
@@ -59,12 +59,13 @@ struct vk_acceleration_structure_build_ops {
    VkResult (*encode_bind_pipeline[MAX_ENCODE_PASSES])(VkCommandBuffer cmd_buffer,
                                                        uint32_t key);
    void (*encode_as[MAX_ENCODE_PASSES])(VkCommandBuffer cmd_buffer,
-                                        struct vk_acceleration_structure *dst,
+                                        const VkAccelerationStructureBuildGeometryInfoKHR *build_info,
+                                        const VkAccelerationStructureBuildRangeInfoKHR *build_range_infos,
                                         VkDeviceAddress intermediate_as_addr,
                                         VkDeviceAddress intermediate_header_addr,
                                         uint32_t leaf_count,
-                                        VkGeometryTypeKHR geometry_type,
-                                        uint32_t key);
+                                        uint32_t key,
+                                        struct vk_acceleration_structure *dst);
    void (*init_update_scratch)(VkCommandBuffer cmd_buffer,
                                VkDeviceAddress scratch,
                                uint32_t leaf_count,
@@ -72,9 +73,9 @@ struct vk_acceleration_structure_build_ops {
                                struct vk_acceleration_structure *dst_as);
    void (*update_bind_pipeline[MAX_ENCODE_PASSES])(VkCommandBuffer cmd_buffer);
    void (*update_as[MAX_ENCODE_PASSES])(VkCommandBuffer cmd_buffer,
-                                        VkDeviceAddress scratch,
+                                        const VkAccelerationStructureBuildGeometryInfoKHR *build_info,
+                                        const VkAccelerationStructureBuildRangeInfoKHR *build_range_infos,
                                         uint32_t leaf_count,
-                                        VkGeometryTypeKHR geometry_type,
                                         struct vk_acceleration_structure *dst,
                                         struct vk_acceleration_structure *src);
 };

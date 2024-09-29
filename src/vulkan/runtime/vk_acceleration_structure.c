@@ -1148,25 +1148,24 @@ vk_cmd_build_acceleration_structures(VkCommandBuffer commandBuffer,
 
             VK_FROM_HANDLE(vk_acceleration_structure, accel_struct, pInfos[i].dstAccelerationStructure);
 
-            VkGeometryTypeKHR geometry_type = vk_get_as_geometry_type(&pInfos[i]);
-
             if (update) {
                VK_FROM_HANDLE(vk_acceleration_structure, src, pInfos[i].srcAccelerationStructure);
                ops->update_as[pass](commandBuffer,
-                                    pInfos[i].scratchData.deviceAddress,
+                                    &pInfos[i],
+                                    ppBuildRangeInfos[i],
                                     bvh_states[i].leaf_node_count,
-                                    geometry_type,
                                     src,
                                     accel_struct);
 
             } else {
                ops->encode_as[pass](commandBuffer,
-                                    accel_struct,
+                                    &pInfos[i],
+                                    ppBuildRangeInfos[i],
                                     pInfos[i].scratchData.deviceAddress + bvh_states[i].scratch.ir_offset,
                                     pInfos[i].scratchData.deviceAddress + bvh_states[i].scratch.header_offset,
                                     bvh_states[i].leaf_node_count,
-                                    geometry_type,
-                                    encode_key);
+                                    encode_key,
+                                    accel_struct);
             }
 
             bvh_states[i].last_encode_pass = pass + 1;
@@ -1198,9 +1197,7 @@ vk_get_as_build_sizes(VkDevice _device, VkAccelerationStructureBuildTypeKHR buil
    get_scratch_layout(device, leaf_count, pBuildInfo, args, &scratch);
 
    pSizeInfo->accelerationStructureSize =
-      device->as_build_ops->get_as_size(_device,
-                                        vk_get_as_geometry_type(pBuildInfo),
-                                        leaf_count);
+      device->as_build_ops->get_as_size(_device, pBuildInfo, leaf_count);
    pSizeInfo->updateScratchSize = scratch.update_size;
    pSizeInfo->buildScratchSize = scratch.size;
 }
