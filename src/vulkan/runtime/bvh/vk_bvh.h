@@ -21,8 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef BVH_BVH_H
-#define BVH_BVH_H
+#ifndef BVH_VK_BVH_H
+#define BVH_VK_BVH_H
 
 #define vk_ir_node_triangle 0
 #define vk_ir_node_internal 1

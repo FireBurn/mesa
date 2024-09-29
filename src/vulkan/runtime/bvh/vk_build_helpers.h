@@ -21,8 +21,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef BVH_BUILD_HELPERS_H
-#define BVH_BUILD_HELPERS_H
+#ifndef VK_BVH_BUILD_HELPERS_H
+#define VK_BVH_BUILD_HELPERS_H
 
 #include "vk_bvh.h"
 
