@@ -152,7 +152,7 @@ impl SPIRVBin {
             num_args: c_args.len() as u32,
             spirv_version: clc_spirv_version::CLC_SPIRV_VERSION_MAX,
             features: features,
-            use_llvm_spirv_target: false,
+            use_llvm_spirv_target: true,
             allowed_spirv_extensions: spirv_extensions.as_ptr(),
             c_compatible: false,
             address_bits: address_bits,

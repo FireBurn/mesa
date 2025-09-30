@@ -189,22 +189,20 @@ rusticl_llvm_bindings_rs = rust.bindgen(
     pre_args,
   ],
   dependencies : [
-    dep_clang,
     dep_llvm,
-    dep_llvmspirvlib,
   ],
   args : [
     bindgen_output_args,
-    # we want to limit what to generate bindings for
     '--generate', 'constructors,functions,types,vars',
-    # and all types will be opaque
-    '--opaque-type', '.*',
-    # LLVM/Clang/Translator stuff, only used for build-id
-    # also only use functions from very basic header files, otherwise bindgen might crash :')
-    '--allowlist-function', 'clang::getClangFullVersion',
-    '--allowlist-function', 'llvm::LLVMContext::LLVMContext',
-    '--allowlist-function', 'llvm::writeSpirv',
-    '--allowlist-var', 'LLVM_VERSION_.*'
+    # Correct allowlist with only LLVM C-API functions
+    '--allowlist-function', 'LLVMContextDispose',
+    '--allowlist-function', 'LLVMInitializeAllAsmParsers',
+    '--allowlist-function', 'LLVMInitializeAllAsmPrinters',
+    '--allowlist-function', 'LLVMInitializeAllTargetInfos',
+    '--allowlist-function', 'LLVMInitializeAllTargetMCs',
+    '--allowlist-function', 'LLVMInitializeAllTargets',
+    '--allowlist-var', 'LLVM_VERSION_MAJOR',
+    '--allowlist-var', 'LLVM_VERSION_MINOR',
   ],
 )
 

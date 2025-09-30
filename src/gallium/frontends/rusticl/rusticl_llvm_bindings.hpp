@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <clang/Basic/Version.h>
-#include <llvm/Config/llvm-config.h>
-#include <llvm/IR/LLVMContext.h>
-#include <LLVMSPIRVLib/LLVMSPIRVLib.h>
+#pragma once
+
+#include <llvm-c/Core.h>
+#include <llvm-c/Target.h>

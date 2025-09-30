@@ -43,7 +43,6 @@
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
-#include <LLVMSPIRVLib/LLVMSPIRVLib.h>
 
 #include <clang/Config/config.h>
 #include <clang/Driver/Driver.h>
@@ -89,8 +88,6 @@ namespace fs = std::filesystem;
 
 /* Use the highest version of SPIRV supported by SPIRV-Tools. */
 constexpr spv_target_env spirv_target = SPV_ENV_UNIVERSAL_1_6;
-
-constexpr SPIRV::VersionNumber invalid_spirv_trans_version = static_cast<SPIRV::VersionNumber>(0);
 
 using ::llvm::Function;
 using ::llvm::legacy::PassManager;
@@ -1093,20 +1090,6 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
    return mod;
 }
 
-static SPIRV::VersionNumber
-spirv_version_to_llvm_spirv_translator_version(enum clc_spirv_version version)
-{
-   switch (version) {
-   case CLC_SPIRV_VERSION_MAX: return SPIRV::VersionNumber::MaximumVersion;
-   case CLC_SPIRV_VERSION_1_0: return SPIRV::VersionNumber::SPIRV_1_0;
-   case CLC_SPIRV_VERSION_1_1: return SPIRV::VersionNumber::SPIRV_1_1;
-   case CLC_SPIRV_VERSION_1_2: return SPIRV::VersionNumber::SPIRV_1_2;
-   case CLC_SPIRV_VERSION_1_3: return SPIRV::VersionNumber::SPIRV_1_3;
-   case CLC_SPIRV_VERSION_1_4: return SPIRV::VersionNumber::SPIRV_1_4;
-   default:      return invalid_spirv_trans_version;
-   }
-}
-
 static int
 llvm_mod_to_spirv(std::unique_ptr<::llvm::Module> mod,
                   LLVMContext &context,
@@ -1114,98 +1097,48 @@ llvm_mod_to_spirv(std::unique_ptr<::llvm::Module> mod,
                   const struct clc_logger *logger,
                   struct clc_binary *out_spirv)
 {
-   std::string log;
-
-   SPIRV::VersionNumber version =
-      spirv_version_to_llvm_spirv_translator_version(args->spirv_version);
-   if (version == invalid_spirv_trans_version) {
-      clc_error(logger, "Invalid/unsupported SPIRV specified.\n");
-      return -1;
-   }
-
-   const char *const *extensions = args->allowed_spirv_extensions;
-   if (!extensions) {
-      /* The SPIR-V parser doesn't handle all extensions */
-      static const char *default_extensions[] = {
-         "SPV_EXT_shader_atomic_float_add",
-         "SPV_EXT_shader_atomic_float_min_max",
-         "SPV_KHR_float_controls",
-         NULL,
-      };
-      extensions = default_extensions;
-   }
-
-   SPIRV::TranslatorOpts::ExtensionsStatusMap ext_map;
-   for (int i = 0; extensions[i]; i++) {
-#define EXT(X) \
-      if (strcmp(#X, extensions[i]) == 0) \
-         ext_map.insert(std::make_pair(SPIRV::ExtensionID::X, true));
-#include "LLVMSPIRVLib/LLVMSPIRVExtensions.inc"
-#undef EXT
-   }
-   SPIRV::TranslatorOpts spirv_opts = SPIRV::TranslatorOpts(version, ext_map);
-
-   /* This was the default in 12.0 and older, but currently we'll fail to parse without this */
-   spirv_opts.setPreserveOCLKernelArgTypeMetadataThroughString(true);
-
-#if LLVM_VERSION_MAJOR >= 17
-   if (args->use_llvm_spirv_target) {
-      const char *triple = args->address_bits == 32 ? "spirv-unknown-unknown" : "spirv64-unknown-unknown";
-      std::string error_msg("");
-      auto target = TargetRegistry::lookupTarget(triple, error_msg);
-      if (target) {
-         auto TM = target->createTargetMachine(
+   unsigned address_bits = args ? args->address_bits
+                                : mod->getDataLayout().getPointerSizeInBits();
+   const char *triple = address_bits == 32 ? "spirv-unknown-unknown" : "spirv64-unknown-unknown";
+   std::string error_msg("");
+   auto target = TargetRegistry::lookupTarget(triple, error_msg);
+   if (target) {
+      auto TM = target->createTargetMachine(
 #if LLVM_VERSION_MAJOR >= 21
-            llvm::Triple(triple),
+         llvm::Triple(triple),
 #else
-            triple,
+         triple,
 #endif
-            "", "", {}, std::nullopt, std::nullopt,
+         "", "", {}, std::nullopt, std::nullopt,
 #if LLVM_VERSION_MAJOR >= 18
-            ::llvm::CodeGenOptLevel::None
+         ::llvm::CodeGenOptLevel::None
 #else
-            ::llvm::CodeGenOpt::None
+         ::llvm::CodeGenOpt::None
 #endif
-         );
+      );
 
-         auto PM = PassManager();
-         ::llvm::SmallVector<char> buf;
-         auto OS = ::llvm::raw_svector_ostream(buf);
-         TM->addPassesToEmitFile(
-            PM, OS, nullptr,
+      auto PM = PassManager();
+      ::llvm::SmallVector<char> buf;
+      auto OS = ::llvm::raw_svector_ostream(buf);
+      TM->addPassesToEmitFile(
+         PM, OS, nullptr,
 #if LLVM_VERSION_MAJOR >= 18
-            ::llvm::CodeGenFileType::ObjectFile
+         ::llvm::CodeGenFileType::ObjectFile
 #else
-            ::llvm::CGFT_ObjectFile
+         ::llvm::CGFT_ObjectFile
 #endif
-         );
+      );
 
-         PM.run(*mod);
+      PM.run(*mod);
 
-         out_spirv->size = buf.size_in_bytes();
-         out_spirv->data = malloc(out_spirv->size);
-         memcpy(out_spirv->data, buf.data(), out_spirv->size);
-         return 0;
-      } else {
-         clc_error(logger, "LLVM SPIR-V target not found.\n");
-         return -1;
-      }
-   }
-#endif
-
-   std::ostringstream spv_stream;
-   if (!::llvm::writeSpirv(mod.get(), spirv_opts, spv_stream, log)) {
-      clc_error(logger, "%sTranslation from LLVM IR to SPIR-V failed.\n",
-                log.c_str());
+      out_spirv->size = buf.size_in_bytes();
+      out_spirv->data = malloc(out_spirv->size);
+      memcpy(out_spirv->data, buf.data(), out_spirv->size);
+      return 0;
+   } else {
+      clc_error(logger, "LLVM SPIR-V target not found.\n");
       return -1;
    }
-
-   const std::string spv_out = spv_stream.str();
-   out_spirv->size = spv_out.size();
-   out_spirv->data = malloc(out_spirv->size);
-   memcpy(out_spirv->data, spv_out.data(), out_spirv->size);
-
-   return 0;
 }
 
 int

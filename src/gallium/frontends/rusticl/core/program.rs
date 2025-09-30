@@ -55,11 +55,7 @@ fn get_disk_cache() -> &'static Option<DiskCache> {
         // ourselves
         get_disk_cache as _,
         // LLVM
-        llvm_LLVMContext_LLVMContext as _,
-        // clang
-        clang_getClangFullVersion as _,
-        // SPIRV-LLVM-Translator
-        llvm_writeSpirv1 as _,
+        LLVMContextDispose as _,
     ];
     unsafe {
         DISK_CACHE_ONCE.call_once(|| {

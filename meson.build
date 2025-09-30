@@ -1827,27 +1827,6 @@ pre_args += '-DDRAW_LLVM_AVAILABLE=@0@'.format(draw_with_llvm.to_int())
 pre_args += '-DAMD_LLVM_AVAILABLE=@0@'.format(amd_with_llvm.to_int())
 pre_args += '-DGALLIVM_USE_ORCJIT=@0@'.format((dep_llvm.found() and llvm_with_orcjit).to_int())
 
-if with_clc
-  chosen_llvm_version_array = dep_llvm.version().split('.')
-  chosen_llvm_version_major = chosen_llvm_version_array[0].to_int()
-  chosen_llvm_version_minor = chosen_llvm_version_array[1].to_int()
-
-  # Require an SPIRV-LLVM-Translator version compatible with the chosen LLVM
-  # one.
-
-  _llvmspirvlib_min_version = '>= 15.0.0.0'
-
-  _llvmspirvlib_version = [
-    _llvmspirvlib_min_version,
-    '>= @0@.@1@'.format(chosen_llvm_version_major, chosen_llvm_version_minor),
-    '< @0@.@1@'.format(chosen_llvm_version_major, chosen_llvm_version_minor + 1) ]
-
-  # LLVMSPIRVLib is available at https://github.com/KhronosGroup/SPIRV-LLVM-Translator
-  dep_llvmspirvlib = dependency('LLVMSPIRVLib', required : true, version : _llvmspirvlib_version)
-else
-  dep_llvmspirvlib = null_dep
-endif
-
 with_spirv_tools = get_option('spirv-tools') \
     .enable_if(with_clc, error_message : 'CLC requires SPIRV-Tools')
 

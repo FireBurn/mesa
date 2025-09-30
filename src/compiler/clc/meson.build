@@ -106,7 +106,7 @@ _libmesaclc = static_library(
   include_directories : [inc_include, inc_src, inc_spirv],
   c_args : _libmesaclc_c_args,
   cpp_args : [_libmesaclc_cpp_args, _libmesaclc_c_args],
-  dependencies: [idep_nir, dep_clang, dep_llvm, dep_llvmspirvlib,
+  dependencies: [idep_nir, dep_clang, dep_llvm,
                  idep_mesautil, dep_spirv_tools, idep_vtn, dep_version]
 )
 
