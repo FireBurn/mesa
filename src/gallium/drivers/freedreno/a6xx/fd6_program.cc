@@ -46,7 +46,7 @@ template <chip CHIP>
 static void
 emit_shader_regs(struct fd_context *ctx, fd_cs &cs, const struct ir3_shader_variant *so)
 {
-   fd_crb crb(cs, 11);
+   fd_crb crb(cs, 12);
 
    mesa_shader_stage type = so->type;
    if (type == MESA_SHADER_KERNEL)
@@ -170,6 +170,12 @@ emit_shader_regs(struct fd_context *ctx, fd_cs &cs, const struct ir3_shader_vari
          .earlypreamble = so->early_preamble,
          .mergedregs = so->mergedregs,
       ));
+      if (CHIP >= A8XX) {
+         crb.add(RB_PS_CNTL(CHIP,
+            .pixlodenable = so->need_pixlod,
+            .lodpixmask = so->need_full_quad,
+         ));
+      }
       crb.add(A6XX_SP_PS_INSTR_SIZE(so->instrlen));
       crb.add(A6XX_SP_PS_PROGRAM_COUNTER_OFFSET());
       crb.add(A6XX_SP_PS_BASE(so->bo));
@@ -463,6 +469,7 @@ primitive_to_tess(enum mesa_prim primitive)
 
 #define MAX_VERTEX_ATTRIBS 32
 
+template <chip CHIP>
 static void
 emit_vfd_dest(fd_crb &crb, const struct ir3_shader_variant *vs)
 {
@@ -476,6 +483,26 @@ emit_vfd_dest(fd_crb &crb, const struct ir3_shader_variant *vs)
       .fetch_cnt = attr_count, /* decode_cnt for binning pass ? */
       .decode_cnt = attr_count
    ));
+
+   if (CHIP >= A8XX) {
+      const uint32_t vertexid_regid =
+            ir3_find_sysval_regid(vs, SYSTEM_VALUE_VERTEX_ID);
+      const uint32_t instanceid_regid =
+            ir3_find_sysval_regid(vs, SYSTEM_VALUE_INSTANCE_ID);
+      /* Note: we currently don't support multiview.
+       */
+      const uint32_t viewid_regid = INVALID_REG;
+
+      unsigned sideband_count =
+         (vertexid_regid != INVALID_REG) +
+         (instanceid_regid != INVALID_REG) +
+         (viewid_regid != INVALID_REG);
+
+      crb.add(PC_VS_INPUT_CNTL(CHIP,
+         .instr_cnt = attr_count,
+         .sideband_cnt = sideband_count,
+      ));
+   }
 
    for (uint32_t i = 0; i < attr_count; i++) {
       assert(!vs->inputs[i].sysval);
@@ -1045,7 +1072,7 @@ emit_fs_inputs(fd_crb &crb, const struct program_builder *b)
       ));
    }
 
-   if (CHIP == A7XX) {
+   if (CHIP >= A7XX) {
       for (int i = 0; i < fs->num_sampler_prefetch; i++) {
          const struct ir3_sampler_prefetch *prefetch = &fs->sampler_prefetch[i];
          crb.add(A6XX_SP_PS_INITIAL_TEX_INDEX_CMD(i,
@@ -1056,6 +1083,10 @@ emit_fs_inputs(fd_crb &crb, const struct program_builder *b)
    }
 
    crb.add(SP_LB_PARAM_LIMIT(CHIP, b->ctx->screen->info->props.prim_alloc_threshold));
+
+   if (CHIP == A8XX)
+      crb.add(RB_LB_PARAM_LIMIT(CHIP, b->ctx->screen->info->props.prim_alloc_threshold));
+
    crb.add(SP_REG_PROG_ID_0(CHIP,
       .faceregid = face_regid,
       .sampleid = samp_id_regid,
@@ -1245,7 +1276,7 @@ setup_stateobj(fd_cs &cs, const struct program_builder *b)
 
    crb.add(PC_STEREO_RENDERING_CNTL(CHIP));
 
-   emit_vfd_dest(crb, b->vs);
+   emit_vfd_dest<CHIP>(crb, b->vs);
    emit_vpc<CHIP>(crb, b);
 
    emit_fs_inputs<CHIP>(crb, b);
