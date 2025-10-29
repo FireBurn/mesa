@@ -4654,7 +4654,7 @@
         "description": "tu: Add capture/replay for sparse buffers and descriptor buffer.",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8feed47fce263438d1b2546e8f3475a4e0caa8d6",
         "notes": null
