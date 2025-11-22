@@ -2324,8 +2324,8 @@ update_vsc_pipe(struct tu_cmd_buffer *cmd,
    const struct tu_vsc_config *vsc = tu_vsc_config(cmd, tiling);
 
    tu_cs_emit_regs(cs,
-                   A6XX_VSC_BIN_SIZE(.width = tiling->tile0.width,
-                                     .height = tiling->tile0.height));
+                   A6XX_VSC_BIN_SIZE(.binw = tiling->tile0.width,
+                                     .binh = tiling->tile0.height));
 
    tu_cs_emit_regs(cs,
                    A6XX_VSC_EXPANDED_BIN_CNTL(.nx = vsc->tile_count.width,
