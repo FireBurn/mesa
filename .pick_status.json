@@ -764,7 +764,7 @@
         "description": "mesa/main: remove unused array",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "37190ad932a8e7e67c69343249e895313790ef7b",
         "notes": null

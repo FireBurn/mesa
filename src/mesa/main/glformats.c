@@ -4176,7 +4176,7 @@ _mesa_tex_format_from_format_and_type(const struct gl_context *ctx,
    if (_mesa_format_is_mesa_array_format(format))
       format = _mesa_format_from_array_format(format);
       
-   if (format == MESA_FORMAT_NONE || !ctx->TextureFormatSupported[format])
+   if (format == MESA_FORMAT_NONE)
       return MESA_FORMAT_NONE;
 
    return format;
