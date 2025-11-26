@@ -774,7 +774,7 @@
         "description": "Revert \"mesa: check for ARB_ES3_compatibility in format checks\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d5916cb3ca7af90f81639d91922efecf9e713fda",
         "notes": null
