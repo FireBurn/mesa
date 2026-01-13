@@ -1437,7 +1437,7 @@ a8xx_base = GPUProps(
         has_dp2acc = False,
         reg_size_vec4 = 96,
         has_rt_workaround = False,
-        supports_double_threadsize = False
+        supports_double_threadsize = False,
     )
 
 a8xx_gen1 = GPUProps(
@@ -1457,6 +1457,7 @@ a8xx_gen1 = GPUProps(
         gmem_ccu_depth_cache_fraction = CCUColorCacheFraction.FULL.value,
         gmem_per_ccu_depth_cache_size = 127 * 1024,
         has_fs_tex_prefetch = False,
+        disable_gmem = True,
 )
 
 # adreno_gen8_6_0 config (FD825). Not sure if this works
