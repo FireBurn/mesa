@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -92,6 +93,7 @@ static int current_draw_count;
  * loaded:
  */
 static int *queryvals;
+static int nqueryvals;
 
 static bool
 quiet(int lvl)
@@ -793,6 +795,53 @@ static struct {
 static struct rnn *rnn;
 
 static void
+add_query_val(const char *querystr, int val)
+{
+   printf("querystr: %s -> 0x%x\n", querystr, val);
+   queryvals = realloc(queryvals, (nqueryvals + 1) * sizeof(!*queryvals));
+   queryvals[nqueryvals] = val;
+   nqueryvals++;
+}
+
+static void
+add_query(const char *querystr)
+{
+   int val = strtol(querystr, NULL, 0);
+
+   if (val) {
+      add_query_val(querystr, val);
+      return;
+   }
+
+   regex_t regex;
+   bool found = false;
+   int ret;
+
+   ret = regcomp(&regex, querystr, REG_EXTENDED);
+   if (ret) {
+      errx(-1, "Invalid regex: %s\n", querystr);
+   }
+
+   for (unsigned off = 0; off < regcnt(); off++) {
+      const char *name = rnn_regname(rnn, off, false);
+
+      if (!name)
+         continue;
+
+      ret = regexec(&regex, name, 0, NULL, 0);
+      if (ret)
+         continue;
+
+      add_query_val(name, off);
+      found = true;
+   }
+
+   if (!found) {
+      errx(-1, "no match: %s\n", querystr);
+   }
+}
+
+static void
 init_rnn(const char *gpuname)
 {
    rnn = rnn_new(!options->color);
@@ -800,17 +849,8 @@ init_rnn(const char *gpuname)
    rnn_load(rnn, gpuname);
 
    if (options->querystrs) {
-      int i;
-      queryvals = calloc(options->nquery, sizeof(queryvals[0]));
-
-      for (i = 0; i < options->nquery; i++) {
-         int val = strtol(options->querystrs[i], NULL, 0);
-
-         if (val == 0)
-            val = regbase(options->querystrs[i]);
-
-         queryvals[i] = val;
-         printf("querystr: %s -> 0x%x\n", options->querystrs[i], queryvals[i]);
+      for (int i = 0; i < options->nquery; i++) {
+         add_query(options->querystrs[i]);
       }
    }
 
@@ -1166,7 +1206,7 @@ skip_query(void)
       /* never skip: */
       return false;
    case QUERY_WRITTEN:
-      for (int i = 0; i < options->nquery; i++) {
+      for (int i = 0; i < nqueryvals; i++) {
          uint32_t regbase = queryvals[i];
          if (!reg_written(regbase)) {
             continue;
@@ -1177,7 +1217,7 @@ skip_query(void)
       }
       return true;
    case QUERY_DELTA:
-      for (int i = 0; i < options->nquery; i++) {
+      for (int i = 0; i < nqueryvals; i++) {
          uint32_t regbase = queryvals[i];
          if (!reg_written(regbase)) {
             continue;
@@ -1207,7 +1247,7 @@ __do_query(const char *primtype, uint32_t num_indices)
       bin_y2 = scissor_br >> 16;
    }
 
-   for (int i = 0; i < options->nquery; i++) {
+   for (int i = 0; i < nqueryvals; i++) {
       uint32_t regbase = queryvals[i];
       if (!reg_written(regbase))
          continue;
