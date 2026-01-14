@@ -712,6 +712,8 @@ static void parsedomain(struct rnndb *db, char *file, xmlNode *node) {
 		cur->varinfo.varsetstr = varsetstr;
 		cur->varinfo.variantsstr = variantsstr;
 		cur->file = file;
+		cur->maxoff = 0;
+		cur->minoff = ~0;
 		ADDARRAY(db->domains, cur);
 	}
 	xmlNode *chain = node->children;
@@ -720,6 +722,8 @@ static void parsedomain(struct rnndb *db, char *file, xmlNode *node) {
 		if (chain->type != XML_ELEMENT_NODE) {
 		} else if ((delem = trydelem(db, file, chain))) {
 			ADDARRAY(cur->subelems, delem);
+			cur->minoff = MIN2(cur->minoff, delem->offset);
+			cur->maxoff = MAX2(cur->maxoff, delem->offset + (delem->length * delem->stride));
 		} else if (!trytop(db, file, chain) && !trydoc(db, file, chain)) {
 			rnn_err(db, "%s:%d: wrong tag in domain: <%s>\n", file, chain->line, chain->name);
 		}

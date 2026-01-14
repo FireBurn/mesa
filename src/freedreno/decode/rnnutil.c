@@ -10,16 +10,32 @@
 
 #include <assert.h>
 #include <err.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "rnn.h"
 
 #include "rnnutil.h"
+
+static bool
+in_range(struct rnndomain *dom, uint32_t regbase)
+{
+   return (dom->minoff <= regbase) && (regbase <= dom->maxoff);
+}
 
 static struct rnndomain *
 finddom(struct rnn *rnn, uint32_t regbase)
 {
+   /* A2XX/A3XX have split domains with common regs.. but the ranges
+    * overlap so we can't just use in_range() for a fast compare:
+    *
+    * Everything else has dom[0]==dom[1] so we can skip the extra
+    * lookup.
+    */
+   if (rnn->dom[0] == rnn->dom[1])
+      return rnn->dom[0];
    if (rnndec_checkaddr(rnn->vc, rnn->dom[0], regbase, 0))
       return rnn->dom[0];
    return rnn->dom[1];
@@ -118,9 +134,13 @@ rnn_regname(struct rnn *rnn, uint32_t regbase, int color)
 {
    static char buf[128];
    struct rnndecaddrinfo *info;
+   struct rnndomain *dom = finddom(rnn, regbase);
+
+   if (!in_range(dom, regbase))
+      return NULL;
 
    info = rnndec_decodeaddr(color ? rnn->vc : rnn->vc_nocolor,
-                            finddom(rnn, regbase), regbase, 0);
+                            dom, regbase, 0);
    if (info) {
       strcpy(buf, info->name);
       free(info->name);
