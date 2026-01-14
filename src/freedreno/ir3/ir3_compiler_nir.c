@@ -576,6 +576,7 @@ emit_alu(struct ir3_context *ctx, nir_alu_instr *alu)
    assert(dst_sz == 1 || ir3_supports_vectorized_nir_op(alu->op));
 
    bool use_shared = !alu->def.divergent &&
+      ctx->compiler->gen != 8 &&  // gen8 TODO
       ctx->compiler->has_scalar_alu &&
       /* it probably isn't worth emulating these with scalar-only ops */
       alu->op != nir_op_udot_4x8_uadd &&
