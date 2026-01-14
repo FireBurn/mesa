@@ -373,6 +373,13 @@ struct fd_dev_info {
 
       bool has_primitive_shading_rate;
 
+      /* If true, the hw shading rate value matches vk/gl rather than dx.
+       *
+       *   dx:  (width_log2 << 2) | height_log2
+       *   vk:  (height_log2 << 2) | width_log2
+       */
+      bool shading_rate_matches_vk;
+
       /* A7XX gen1 and gen2 seem to require declaring SAMPLEMASK input
        * for fragment shading rate to be read correctly.
        * This workaround was seen in the prop driver v512.762.12.

@@ -312,6 +312,8 @@ struct ir3_compiler {
 
    bool reading_shading_rate_requires_smask_quirk;
 
+   bool shading_rate_matches_vk;
+
    bool cat3_rel_offset_0_quirk;
 
    bool has_sel_b_fneg;
