@@ -265,6 +265,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       compiler->has_shfl = true;
       compiler->reading_shading_rate_requires_smask_quirk =
          dev_info->props.reading_shading_rate_requires_smask_quirk;
+      compiler->shading_rate_matches_vk = dev_info->props.shading_rate_matches_vk;
       compiler->has_alias_rt = dev_info->props.has_alias_rt;
       compiler->mergedregs = true;
       compiler->has_sel_b_fneg = dev_info->props.has_sel_b_fneg;
