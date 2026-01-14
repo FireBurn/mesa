@@ -1920,17 +1920,28 @@ by a particular renderpass/blit.
 		<value value="4" name="FSR_COMBINER_OP_MUL"/>
 	</enum>
 
-	<bitset name="a6xx_gras_vrs_config">
+	<enum name="a6xx_fsr_combiner_clamp_mode">
+		<value value="0" name="FSR_COMBINER_CLAMP_4x4"/>
+		<value value="1" name="FSR_COMBINER_CLAMP_2x2"/>
+		<!-- gen8 and later, reserved on earlier gens: -->
+		<value value="2" name="FSR_COMBINER_CLAMP_16_SAMP"/>
+	</enum>
+
+	<bitset name="a6xx_gras_vrs_config" inline="yes">
 		<bitfield name="PIPELINE_FSR_ENABLE" pos="0" type="boolean"/>
 		<bitfield name="FRAG_SIZE_X" low="1" high="2" type="uint"/>
 		<bitfield name="FRAG_SIZE_Y" low="3" high="4" type="uint"/>
 		<bitfield name="COMBINER_OP_1" low="5" high="7" type="a6xx_fsr_combiner"/>
 		<bitfield name="COMBINER_OP_2" low="8" high="10" type="a6xx_fsr_combiner"/>
+		<bitfield name="COMBINER_CLAMP_MODE" low="11" high="12" type="a6xx_fsr_combiner_clamp_mode"/>
 		<bitfield name="ATTACHMENT_FSR_ENABLE" pos="13" type="boolean"/>
 		<bitfield name="PRIMITIVE_FSR_ENABLE" pos="20" type="boolean"/>
 	</bitset>
 
-	<reg32 offset="0x80f4" name="GRAS_VRS_CONFIG" type="a6xx_gras_vrs_config" variants="A7XX" usage="rp_blit"/>
+	<reg32 offset="0x80f4" name="GRAS_VRS_CONFIG" type="a6xx_gras_vrs_config" variants="A7XX" usage="rp_blit">
+		<bitfield name="QUALITY_BUFFER_SHIFT_X" low="14" high="15" type="uint"/>
+		<bitfield name="QUALITY_BUFFER_SHIFT_Y" low="16" high="17" type="uint"/>
+	</reg32>
 	<reg32 offset="0x8208" name="GRAS_VRS_CONFIG" type="a6xx_gras_vrs_config" variants="A8XX-" usage="rp_blit"/>
 
 	<bitset name="a6xx_gras_quality_buffer_info" inline="yes">
@@ -1939,7 +1950,10 @@ by a particular renderpass/blit.
 	</bitset>
 
 	<reg32 offset="0x80f5" name="GRAS_QUALITY_BUFFER_INFO" type="a6xx_gras_quality_buffer_info" variants="A7XX" usage="rp_blit"/>
-	<reg32 offset="0x808e" name="GRAS_QUALITY_BUFFER_INFO" type="a6xx_gras_quality_buffer_info" variants="A8XX-" usage="rp_blit"/>
+	<reg32 offset="0x808e" name="GRAS_QUALITY_BUFFER_INFO" type="a6xx_gras_quality_buffer_info" variants="A8XX-" usage="rp_blit">
+		<bitfield name="QUALITY_BUFFER_SHIFT_X" low="4" high="5" type="uint"/>
+		<bitfield name="QUALITY_BUFFER_SHIFT_Y" low="6" high="7" type="uint"/>
+	</reg32>
 
 	<bitset name="a6xx_gras_quality_buffer_dimension" inline="yes">
 		<bitfield name="WIDTH" low="0" high="15" type="uint"/>
