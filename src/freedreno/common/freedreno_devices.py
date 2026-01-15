@@ -1583,10 +1583,10 @@ add_gpus([
         tile_align_h = 32,
         tile_max_w = 16384,
         tile_max_h = 16384,
-        num_vsc_pipes = 32,
-        cs_shared_mem_size = 32 * 1024,
+        num_vsc_pipes = 16,
+        cs_shared_mem_size = 16 * 1024,
         wave_granularity = 2,
-        fibers_per_sp = 128 * 2 * 16,
+        fibers_per_sp = 96 * 2 * 16,
         highest_bank_bit = 15, # kgsl
         magic_regs = dict(
         ),
