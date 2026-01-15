@@ -1464,7 +1464,7 @@ a8xx_gen1 = GPUProps(
 # adreno_gen8_6_0 config (FD825). Not sure if this works
 a8xx_825 = GPUProps(
         sysmem_ccu_depth_cache_fraction = CCUColorCacheFraction.THREE_QUARTER.value,
-        sysmem_per_ccu_depth_cache_size = 96 * 1024, # ??????
+        sysmem_per_ccu_depth_cache_size = 128 * 1024, # ??????
         )
 
 # adreno_gen8_3_0
