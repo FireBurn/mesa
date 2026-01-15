@@ -492,7 +492,10 @@ class Reg(object):
         self.bitset.dump_regpair_builder(self)
 
     def dump_py(self):
-        print("\tREG_%s = 0x%08x" % (self.full_name, self.offset))
+        offset = self.offset
+        if self.array:
+            offset += self.array.offset
+        print("\tREG_%s = 0x%08x" % (self.full_name, offset))
 
 
 class Parser(object):
