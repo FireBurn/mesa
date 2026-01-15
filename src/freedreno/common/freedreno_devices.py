@@ -1458,6 +1458,7 @@ a8xx_gen1 = GPUProps(
         gmem_per_ccu_depth_cache_size = 127 * 1024,
         has_fs_tex_prefetch = False,
         disable_gmem = True,
+        shading_rate_matches_vk = True,
 )
 
 # adreno_gen8_6_0 config (FD825). Not sure if this works
