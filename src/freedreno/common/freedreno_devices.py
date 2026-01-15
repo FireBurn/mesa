@@ -1573,7 +1573,7 @@ add_gpus([
 # There's some variant of A8XX GPU in KGSL which has only single slice, but I'm not sure if it's exactly 810
 # gen8_3_0 to be exact
 add_gpus([
-        GPUId(chip_id=0x44010000, name="FD810"), # kgsl
+        #GPUId(chip_id=0x44010000, name="FD810"), # kgsl
     ], A6xxGPUInfo(
         CHIP.A8XX,
         [a7xx_base, a7xx_gen3, a8xx_base, GPUProps(disable_gmem = True,)],
