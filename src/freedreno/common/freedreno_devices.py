@@ -1576,8 +1576,8 @@ add_gpus([
         GPUId(chip_id=0x44010000, name="FD810"), # kgsl
     ], A6xxGPUInfo(
         CHIP.A8XX,
-        [a7xx_base, a7xx_gen3, a8xx_base, a8xx_gen1, a8xx_810],
-        num_ccu = 1,
+        [a7xx_base, a7xx_gen3, a8xx_base],
+        num_ccu = 2,
         num_slices = 1,
         tile_align_w = 64,
         tile_align_h = 32,
