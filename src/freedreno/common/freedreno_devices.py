@@ -1523,6 +1523,38 @@ add_gpus([
         raw_magic_regs = a8xx_gen2_raw_magic_regs,
     ))
 
+add_gpus([
+        GPUId(chip_id=0x44010000, name="FD810"),
+    ], A6xxGPUInfo(
+        CHIP.A8XX,
+        [a7xx_base, a7xx_gen3, a8xx_base, a8xx_gen2, a8xx_gen1, GPUProps(
+            # These values are maximum size of depth/color cache for current A8XX Gen2 sysmem configuration
+            # Bigger values cause an integer underflow in freedreno gmem calculations
+            sysmem_ccu_color_cache_fraction = CCUColorCacheFraction.FULL.value,
+            sysmem_per_ccu_color_cache_size = 32 * 1024,
+            sysmem_ccu_depth_cache_fraction = CCUColorCacheFraction.THREE_QUARTER.value,
+            sysmem_per_ccu_depth_cache_size = 32 * 1024, # ??????
+            gmem_ccu_color_cache_fraction = CCUColorCacheFraction.EIGHTH.value,
+            gmem_per_ccu_color_cache_size = 16 * 1024,
+            gmem_ccu_depth_cache_fraction = CCUColorCacheFraction.FULL.value,
+            gmem_per_ccu_depth_cache_size = 32 * 1024,
+            ),
+         ],
+        num_ccu = 2,
+        num_slices = 1,
+        tile_align_w = 64,
+        tile_align_h = 32,
+        tile_max_w = 16384,
+        tile_max_h = 16384,
+        num_vsc_pipes = 32,
+        cs_shared_mem_size = 32 * 1024,
+        wave_granularity = 2,
+        fibers_per_sp = 128 * 2 * 16,
+        magic_regs = dict(
+        ),
+        raw_magic_regs = a8xx_gen2_raw_magic_regs,
+    ))
+
 
 # gen8_6_0
 add_gpus([
