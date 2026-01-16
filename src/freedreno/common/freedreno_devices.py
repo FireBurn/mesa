@@ -1490,6 +1490,7 @@ a8xx_base = GPUProps(
 
 a8xx_gen1 = GPUProps(
         reg_size_vec4 = 96,
+        disable_gmem = True,
         )
 
 a8xx_gen2 = GPUProps(
