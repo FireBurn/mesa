@@ -1487,6 +1487,8 @@ a8xx_base = GPUProps(
         supports_double_threadsize = False,
         has_dual_wave_dispatch = True,
         has_salu_int_narrowing_quirk = True
+        # TEST
+        has_salu_int_narrowing_quirk = True,
     )
 
 a8xx_gen1 = GPUProps(
@@ -1586,6 +1588,8 @@ add_gpus([
             gmem_per_ccu_color_cache_size = 16 * 1024,
             gmem_ccu_depth_cache_fraction = CCUColorCacheFraction.FULL.value,
             gmem_per_ccu_depth_cache_size = 32 * 1024,
+            # FD810 does not support ray tracing
+            has_ray_intersection = False,
             ),
          ],
         num_ccu = 2,
