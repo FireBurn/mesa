@@ -1485,6 +1485,8 @@ a8xx_base = GPUProps(
         reg_size_vec4 = 96,
         has_rt_workaround = False,
         supports_double_threadsize = False
+        # TEST
+        has_salu_int_narrowing_quirk = True
     )
 
 a8xx_gen1 = GPUProps(
@@ -1509,10 +1511,9 @@ a8xx_gen2 = GPUProps(
         gmem_ccu_depth_cache_fraction = CCUColorCacheFraction.FULL.value,
         gmem_per_ccu_depth_cache_size = 256 * 1024,
         has_fs_tex_prefetch = False,
+    )
 
-        # tbd if this applies to a8xx_gen1 as well:
-        has_salu_int_narrowing_quirk = True
-)
+
 
 # For a8xx, the chicken bit and most other non-ctx reg
 # programming moves into the kernel, and what remains
