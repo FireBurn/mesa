@@ -1590,6 +1590,8 @@ add_gpus([
             gmem_per_ccu_depth_cache_size = 32 * 1024,
             # FD810 does not support ray tracing
             has_ray_intersection = False,
+            has_alias_rt = False,
+            has_sw_fuse = False, # ????
             ),
          ],
         num_ccu = 2,
