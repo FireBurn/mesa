@@ -1486,7 +1486,6 @@ a8xx_base = GPUProps(
         has_rt_workaround = False,
         supports_double_threadsize = False,
         has_dual_wave_dispatch = True,
-        has_salu_int_narrowing_quirk = True
         # TEST
         has_salu_int_narrowing_quirk = True,
     )
