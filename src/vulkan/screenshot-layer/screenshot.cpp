@@ -790,7 +790,7 @@ void *writePNG(void *data) {
    char *tmpFilename = (char *)malloc(length + 4); // Allow for ".tmp"
    VkResult res;
    png_byte *row_pointer;
-   png_infop info;
+   png_infop info = NULL;
    png_struct* png;
    uint64_t rowPitch = threadData->srLayout.rowPitch;
    uint64_t start_time, end_time;

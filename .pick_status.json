@@ -514,7 +514,7 @@
         "description": "vulkan/screenshot-layer: initialize info to NULL",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "eda55c7c2f695492e8ebdd26725e5be5ee66eb1c",
         "notes": null
