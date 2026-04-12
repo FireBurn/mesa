@@ -734,7 +734,7 @@
         "description": "st/mesa: fix implicit conversion warning in st_atom_framebuffer",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2b37f233143275d5d11fc0a5f392b8d99c7bad29",
         "notes": null
