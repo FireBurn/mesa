@@ -284,7 +284,7 @@
         "description": "nvk: Add a wfi for blackwell in CmdDispatchIndirect",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1c77a6f049da4901682cac62f23d53d60eb9d22d",
         "notes": null
