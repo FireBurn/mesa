@@ -3664,7 +3664,7 @@
         "description": "pan/bi: Restore b3210 as a valid swizzle",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c36326d3afc453c23c8e3bb55d27a7443c89f06c",
         "notes": null
