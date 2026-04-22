@@ -504,7 +504,7 @@
         "description": "screenshot-layer: Fix leftover VK queues in the map at DeviceDestroy.",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "111faf215886a25ce855ca15354d5651bd3d972b",
         "notes": null
