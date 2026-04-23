@@ -864,7 +864,7 @@
         "description": "mesa/main: remove incorrect debug-output",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "916bc4491a2a7607bf2bd22aa1a5a537285c89c9",
         "notes": null
