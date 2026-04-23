@@ -6514,7 +6514,7 @@
         "description": "brw: Fix max_dispatch_width collection for CS with variable size",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2acc2f18ea74e5f59b1e6f67fec49fd0c6b1e466",
         "notes": null
