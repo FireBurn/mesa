@@ -644,7 +644,7 @@
         "description": "radeonsi: fix a typo in si_shader_update_spi_shader_formats",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "88986dcc9c81342a26951d576924d00a21d812c7",
         "notes": null
