@@ -6504,7 +6504,7 @@
         "description": "tu: Fix CP_CCHE_INVALIDATE not being applied at the right point",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fb1c3f7f5de6642fcd127724a0cea5643d39d7ee",
         "notes": null
