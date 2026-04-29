@@ -945,7 +945,7 @@ assign_src(struct ra_ctx *ctx, struct ir3_register *src)
 
 static void
 handle_dst(struct ra_ctx *ctx, struct ir3_instruction *instr,
-           struct ir3_register *dst)
+           struct ir3_register *dst, struct ir3_cursor *reload_cursor)
 {
    if (!(dst->flags & IR3_REG_SHARED))
       return;
@@ -1015,6 +1015,11 @@ handle_dst(struct ra_ctx *ctx, struct ir3_instruction *instr,
       mov->cat1.src_type = mov->cat1.dst_type =
          (dst->flags & IR3_REG_HALF) ? TYPE_U16 : TYPE_U32;;
       dst->tied->num = dst->num;
+
+      /* If the tied src needs to be reloaded, this has to happen before the
+       * parallel copy we just inserted.
+       */
+      *reload_cursor = ir3_before_instr(mov);
    }
 }
 
@@ -1050,11 +1055,12 @@ handle_normal_instr(struct ra_ctx *ctx, struct ir3_instruction *instr)
    ra_foreach_src_rev (src, instr)
       assign_src(ctx, src);
 
+   struct ir3_cursor reload_cursor = ir3_before_instr(instr);
    ra_foreach_dst (dst, instr)
-      handle_dst(ctx, instr, dst);
+      handle_dst(ctx, instr, dst, &reload_cursor);
 
    ra_foreach_src (src, instr)
-      handle_src_late(ctx, ir3_before_instr(instr), src);
+      handle_src_late(ctx, reload_cursor, src);
 }
 
 static void
