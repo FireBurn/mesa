@@ -3274,7 +3274,7 @@
         "description": "ddebug: Fix use of alloca() without #include \"c99_alloca.h\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6fe6c18c12ed7120418dc9b379198895842e4d7b",
         "notes": null
