@@ -2459,7 +2459,7 @@ VkResult pvr_arch_cmd_buffer_end_sub_cmd(struct pvr_cmd_buffer *cmd_buffer)
       if (result != VK_SUCCESS)
          return pvr_cmd_buffer_set_error_unwarned(cmd_buffer, result);
 
-      if (gfx_sub_cmd->multiview_enabled) {
+      if (gfx_sub_cmd->view_index_wanted) {
          result = pvr_csb_gfx_build_view_index_ctrl_stream(
             device,
             pvr_csb_get_start_address(&gfx_sub_cmd->control_stream),
@@ -2730,6 +2730,7 @@ VkResult pvr_arch_cmd_buffer_start_sub_cmd(struct pvr_cmd_buffer *cmd_buffer,
                ? state->render_pass_info.pass->multiview_enabled
                : false;
       }
+      sub_cmd->gfx.view_index_wanted = sub_cmd->gfx.multiview_enabled;
 
       if (state->vis_test_enabled)
          sub_cmd->gfx.query_pool = state->query_pool;
@@ -8133,6 +8134,7 @@ static VkResult pvr_validate_draw_state(struct pvr_cmd_buffer *cmd_buffer)
    struct vk_dynamic_graphics_state *const dynamic_state =
       &cmd_buffer->vk.dynamic_graphics_state;
    const struct pvr_graphics_pipeline *const gfx_pipeline = state->gfx_pipeline;
+   const pco_data *const vs_data = &gfx_pipeline->vs_data;
    const pco_data *const fs_data = &gfx_pipeline->fs_data;
    struct pvr_sub_cmd_gfx *sub_cmd;
    bool fstencil_writemask_zero;
@@ -8178,6 +8180,9 @@ static VkResult pvr_validate_draw_state(struct pvr_cmd_buffer *cmd_buffer)
    sub_cmd->frag_has_side_effects |= fs_data->common.uses.side_effects;
    sub_cmd->frag_uses_texture_rw |= false;
    sub_cmd->vertex_uses_texture_rw |= false;
+
+   sub_cmd->view_index_wanted |= vs_data->common.multiview;
+   sub_cmd->view_index_wanted |= fs_data->common.multiview;
 
    sub_cmd->job.get_vis_results = state->vis_test_enabled;
 
@@ -9076,6 +9081,8 @@ pvr_execute_graphics_cmd_buffer(struct pvr_cmd_buffer *cmd_buffer,
 
       primary_sub_cmd->gfx.job.get_vis_results |=
          sec_sub_cmd->gfx.job.get_vis_results;
+      primary_sub_cmd->gfx.view_index_wanted |=
+         sec_sub_cmd->gfx.view_index_wanted;
 
       primary_sub_cmd->gfx.max_tiles_in_flight =
          MIN2(primary_sub_cmd->gfx.max_tiles_in_flight,

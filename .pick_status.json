@@ -2574,7 +2574,7 @@
         "description": "pvr: setup viewindex if the shader wants it even when multiview disabled",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9d48088428bfe52d234319d2ec9c5b01d56edbc8",
         "notes": null
