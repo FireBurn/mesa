@@ -3824,7 +3824,7 @@
         "description": "ir3/cf: fix rewriting uses with different dst types",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3474ba53b5e6560e758cef51b50d248b6fb806ec",
         "notes": null
