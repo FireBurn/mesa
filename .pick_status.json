@@ -2144,7 +2144,7 @@
         "description": "radv: allow DGC+multiview by default",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e47d584fede2448776c57f10f4163918015a78cb",
         "notes": null
