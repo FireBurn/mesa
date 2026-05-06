@@ -2814,7 +2814,7 @@
         "description": "anv: Fix some usage flags not propagated to ISL for explicit layouts",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8d13628f7f4a7ae139fc91521c2bb7be1571004e",
         "notes": null
