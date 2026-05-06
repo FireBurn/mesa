@@ -122,6 +122,7 @@ struct rendering_state {
    struct pipe_grid_info trace_rays_info;
    struct pipe_framebuffer_state framebuffer;
    int fb_map[PIPE_MAX_COLOR_BUFS];
+   unsigned fb_max_cbufs;
    bool fb_remapped;
 
    struct pipe_blend_state blend_state;
@@ -351,6 +352,7 @@ emit_fb_state(struct rendering_state *state)
             fb.nr_cbufs = MAX2(fb.nr_cbufs, state->fb_map[i] + 1);
          }
       }
+      state->fb_max_cbufs = fb.nr_cbufs;
       state->pctx->set_framebuffer_state(state->pctx, &fb);
    } else {
       state->pctx->set_framebuffer_state(state->pctx, &state->framebuffer);
@@ -399,7 +401,7 @@ static void emit_state(struct rendering_state *state)
       }
       if (state->fb_remapped) {
          struct pipe_blend_state blend = state->blend_state;
-         for (unsigned i = 0; i < state->framebuffer.nr_cbufs; i++) {
+         for (unsigned i = 0; i < state->fb_max_cbufs; i++) {
             if (state->fb_map[i] < PIPE_MAX_COLOR_BUFS) {
                blend.rt[state->fb_map[i]] = state->blend_state.rt[i];
             }
@@ -1739,6 +1741,7 @@ handle_begin_rendering(struct vk_cmd_queue_entry *cmd,
    bool suspending = (info->flags & VK_RENDERING_SUSPENDING_BIT) == VK_RENDERING_SUSPENDING_BIT;
 
    state->fb_remapped = false;
+   state->fb_max_cbufs = 0;
    for (unsigned i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       state->fb_map[i] = i;
 
@@ -1837,6 +1840,7 @@ static void handle_end_rendering(struct vk_cmd_queue_entry *cmd,
    /* ensure that textures are correctly framebuffer-referenced in llvmpipe */
    if (state->fb_remapped) {
       state->fb_remapped = false;
+      state->fb_max_cbufs = 0;
       emit_fb_state(state);
    }
 
@@ -1892,6 +1896,7 @@ handle_rendering_attachment_locations(struct vk_cmd_queue_entry *cmd, struct ren
 {
    VkRenderingAttachmentLocationInfoKHR *set = cmd->u.set_rendering_attachment_locations.location_info;
    state->fb_remapped = !!set->pColorAttachmentLocations;
+   state->fb_max_cbufs = 0;
    memset(state->fb_map, PIPE_MAX_COLOR_BUFS, sizeof(state->fb_map));
    assert(state->color_att_count == set->colorAttachmentCount);
    if (set->pColorAttachmentLocations) {
@@ -1901,6 +1906,8 @@ handle_rendering_attachment_locations(struct vk_cmd_queue_entry *cmd, struct ren
          state->fb_map[i] = set->pColorAttachmentLocations[i];
       }
    }
+   /* force re-emitting colormasks */
+   state->blend_dirty = true;
    emit_fb_state(state);
 }
 
