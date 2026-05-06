@@ -1891,7 +1891,7 @@ static void
 handle_rendering_attachment_locations(struct vk_cmd_queue_entry *cmd, struct rendering_state *state)
 {
    VkRenderingAttachmentLocationInfoKHR *set = cmd->u.set_rendering_attachment_locations.location_info;
-   state->fb_remapped = true;
+   state->fb_remapped = !!set->pColorAttachmentLocations;
    memset(state->fb_map, PIPE_MAX_COLOR_BUFS, sizeof(state->fb_map));
    assert(state->color_att_count == set->colorAttachmentCount);
    if (set->pColorAttachmentLocations) {
