@@ -1484,7 +1484,7 @@
         "description": "radv: do not fallback to compute for image->buffer copies with emulated formats",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3d803d7a2e0e7d46c04381896168c344d59d88e4",
         "notes": null
