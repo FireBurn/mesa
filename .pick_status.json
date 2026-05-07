@@ -2264,7 +2264,7 @@
         "description": "pan/kmod: Fix uninitialized timestamp info",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "302127fe9dc725f80fb242f5666279bedef921c3",
         "notes": null
