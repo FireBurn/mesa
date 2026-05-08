@@ -1394,7 +1394,7 @@
         "description": "v3dv: include mem_offset in vkCmdFillBuffer destination",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5ed78d91fed6ba269c524703174032b7a71f8a93",
         "notes": null
