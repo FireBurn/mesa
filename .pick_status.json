@@ -304,7 +304,7 @@
         "description": "ac/nir/lower_tex_coords: fix optimizing cube txd to tex",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7d552d71e94b3080eb569b3fa6763ab905d98b7a",
         "notes": null
