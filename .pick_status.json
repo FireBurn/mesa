@@ -724,7 +724,7 @@
         "description": "vulkan/wsi/wayland: use mtx helpers in wait_for_present2",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3023f31cadc9a384f0d72832bfca5e05ce0ce89c",
         "notes": null
