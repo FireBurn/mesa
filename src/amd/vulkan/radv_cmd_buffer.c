@@ -1969,13 +1969,19 @@ radv_is_sample_shading_enabled(struct radv_cmd_buffer *cmd_buffer, float *min_sa
    if (min_sample_shading)
       *min_sample_shading = 1.0f;
 
+   /* If the PS requires sample shading for inputs,
+    * min_sample_shading is overwritten to 1.0.
+    */
+   if (ps && ps->info.ps.uses_sample_shading)
+      return true;
+
    if (cmd_buffer->state.ms.sample_shading_enable) {
       if (min_sample_shading)
          *min_sample_shading = cmd_buffer->state.ms.min_sample_shading;
       return true;
    }
 
-   return ps ? ps->info.ps.uses_sample_shading : false;
+   return false;
 }
 
 static ALWAYS_INLINE unsigned
