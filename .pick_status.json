@@ -234,7 +234,7 @@
         "description": "meson: fix renderdoc integration define",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "93390d4b73d1786070613fc685aed7d63b032ca7",
         "notes": null
