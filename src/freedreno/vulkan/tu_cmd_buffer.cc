@@ -8971,6 +8971,21 @@ draw_wfm(struct tu_cmd_buffer *cmd)
    cmd->state.renderpass_cache.pending_flush_bits &= ~TU_CMD_FLAG_WAIT_FOR_ME;
 }
 
+/* CP_DRAW_INDIRECT and CP_DRAW_INDX_INDIRECT wait for pending WFIs to
+ * complete before reading the draw parameters, so they normally don't need a
+ * WAIT_FOR_ME. However some early a6xx firmware doesn't wait
+ * (indirect_draw_wfm_quirk), and a8xx removed the implicit wait from the
+ * indirect opcodes altogether, matching the proprietary driver (see the
+ * corresponding CHIP >= A8XX handling in tu_flush_for_stage()).
+ */
+template <chip CHIP>
+static bool
+indirect_draw_needs_wfm(struct tu_cmd_buffer *cmd)
+{
+   return CHIP >= A8XX ||
+          cmd->device->physical_device->info->props.indirect_draw_wfm_quirk;
+}
+
 template <chip CHIP>
 VKAPI_ATTR void VKAPI_CALL
 tu_CmdDrawIndirect(VkCommandBuffer commandBuffer,
@@ -8985,7 +9000,7 @@ tu_CmdDrawIndirect(VkCommandBuffer commandBuffer,
 
    tu6_emit_empty_vs_params<CHIP>(cmd);
 
-   if (cmd->device->physical_device->info->props.indirect_draw_wfm_quirk)
+   if (indirect_draw_needs_wfm<CHIP>(cmd))
       draw_wfm(cmd);
 
    tu6_draw_common<CHIP>(cmd, cs, false, 0);
@@ -9016,7 +9031,7 @@ tu_CmdDrawIndexedIndirect(VkCommandBuffer commandBuffer,
 
    tu6_emit_empty_vs_params<CHIP>(cmd);
 
-   if (cmd->device->physical_device->info->props.indirect_draw_wfm_quirk)
+   if (indirect_draw_needs_wfm<CHIP>(cmd))
       draw_wfm(cmd);
 
    tu6_draw_common<CHIP>(cmd, cs, true, 0);
