@@ -18,6 +18,33 @@
 #include <errno.h>
 #include <string.h>
 
+#if defined(HAS_FREEDRENO) && defined(__ANDROID__)
+#include <strings.h>
+#include <sys/system_properties.h>
+
+/* SnapAlloc buffer handles (see below) carry no magic value that would
+ * identify them as Qualcomm buffers, so check the SoC vendor instead before
+ * trusting the vendor-specific part of the handle.
+ */
+static bool
+is_qcom_soc(void)
+{
+   static int cached = -1;
+
+   if (cached < 0) {
+      char soc[PROP_VALUE_MAX];
+
+      if (__system_property_get("ro.soc.manufacturer", soc) <= 0)
+         soc[0] = '\0';
+
+      cached = strcasecmp(soc, "QTI") == 0 ||
+               strncasecmp(soc, "Qualcomm", strlen("Qualcomm")) == 0;
+   }
+
+   return cached;
+}
+#endif
+
 struct fallback_gralloc {
    struct u_gralloc base;
    gralloc_module_t *gralloc_module;
@@ -148,11 +175,37 @@ fallback_gralloc_get_buffer_info(struct u_gralloc *gralloc,
    out->strides[0] = stride;
 
 #ifdef HAS_FREEDRENO
-   uint32_t gmsm = ('g' << 24) | ('m' << 16) | ('s' << 8) | 'm';
-   if (hnd->handle->numInts >= 2 && hnd->handle->data[hnd->handle->numFds] == gmsm) {
-      /* This UBWC flag was introduced in a5xx. */
-      bool ubwc = hnd->handle->data[hnd->handle->numFds + 1] & 0x08000000;
-      out->modifier = ubwc ? DRM_FORMAT_MOD_QCOM_COMPRESSED : DRM_FORMAT_MOD_LINEAR;
+   /* Both known layouts of the Qualcomm gralloc private handle store the
+    * PRIV_FLAGS_* word in the second int following the fds:
+    *
+    * - The legacy QTI display gralloc (hardware/qcom/display
+    *   private_handle_t, used up to gralloc4/gralloc5 QtiMapper):
+    *      int magic;   // 'gmsm'
+    *      int flags;   // PRIV_FLAGS_*
+    *      ...
+    *
+    * - SnapAlloc (vendor/opensource/display-core SnapHandleInternal, used
+    *   since the Snapdragon 8 Elite generation), which dropped the magic:
+    *      uint32_t view;
+    *      int flags;   // PRIV_FLAGS_*
+    *      ...
+    *
+    * Legacy handles are identified by their magic. SnapAlloc handles contain
+    * nothing identifying, so only trust the flags word after checking that
+    * the SoC is actually made by Qualcomm.
+    */
+   if (hnd->handle->numInts >= 2) {
+      uint32_t gmsm = ('g' << 24) | ('m' << 16) | ('s' << 8) | 'm';
+      bool qcom = hnd->handle->data[hnd->handle->numFds] == gmsm;
+#ifdef __ANDROID__
+      qcom = qcom || is_qcom_soc();
+#endif
+      if (qcom) {
+         /* This UBWC flag was introduced in a5xx. */
+         bool ubwc = hnd->handle->data[hnd->handle->numFds + 1] & 0x08000000;
+         out->modifier =
+            ubwc ? DRM_FORMAT_MOD_QCOM_COMPRESSED : DRM_FORMAT_MOD_LINEAR;
+      }
    }
 #endif
 
