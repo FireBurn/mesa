@@ -100,6 +100,7 @@ void ac_nir_set_options(const struct ac_compiler_info *info, bool use_llvm,
    options->has_bfdot2_bfadd = info->gfx_level >= GFX12;
    options->has_find_msb_rev = true;
    options->has_pack_32_4x8 = true;
+   options->has_byte_perm_amd = !use_llvm && info->gfx_level >= GFX8;
    options->has_pack_half_2x16_rtz = true;
    options->has_bit_test = !use_llvm;
    options->has_fmulz = true;
