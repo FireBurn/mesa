@@ -108,6 +108,7 @@ typedef enum small_constant_encoding {
    SMALL_CONST_INT,
    SMALL_CONST_FLOAT,
    SMALL_CONST_BCSEL,
+   SMALL_CONST_PERM,
 } small_constant_encoding;
 
 struct small_constant {
@@ -127,6 +128,11 @@ struct small_constant {
       struct {
          uint64_t sel_true;
          uint64_t sel_false;
+      };
+      /* byte_perm_amd: up to 16 bytes, looked up with one or two byte permutes */
+      struct {
+         uint32_t perm_words[4];
+         uint32_t perm_len;
       };
    };
 };
@@ -369,8 +375,19 @@ get_small_constant_component(const nir_shader_compiler_options *options,
     */
    used_bits = util_next_power_of_two(used_bits);
 
-   if (used_bits * array_len > 64)
-      return false;
+   if (used_bits * array_len > 64) {
+      /* A table of up to 16 bytes still fits in four dwords that a byte permute can index. */
+      if (!options->has_byte_perm_amd || bit_size != 8 || array_len > 16)
+         return false;
+
+      memset(info->perm_words, 0, sizeof(info->perm_words));
+      for (unsigned i = 0; i < array_len; i++)
+         info->perm_words[i / 4] |= (uint32_t)nir_const_value_as_uint(values[i], 8) << ((i % 4) * 8);
+      info->perm_len = array_len;
+      info->bit_size = 32;
+      info->encoding = SMALL_CONST_PERM;
+      return true;
+   }
 
    for (unsigned i = 0; i < array_len; i++) {
       int64_t i64_elem;
@@ -440,6 +457,78 @@ get_small_constant(const nir_shader_compiler_options *options, struct var_info *
    }
 }
 
+/* If the index is byte c of a 32-bit word (e.g. a nibble unpacked from packed data), return
+ * the word so that all four bytes can be looked up with one set of byte permutes.
+ */
+static nir_def *
+small_constant_perm_word(nir_def *index, unsigned *byte)
+{
+   nir_scalar s = nir_scalar_resolved(index, 0);
+   while (nir_scalar_is_alu(s) &&
+          (nir_scalar_alu_op(s) == nir_op_u2u32 || nir_scalar_alu_op(s) == nir_op_u2u16 ||
+           nir_scalar_alu_op(s) == nir_op_u2u8))
+      s = nir_scalar_chase_alu_src(s, 0);
+
+   if (!nir_scalar_is_alu(s))
+      return NULL;
+
+   nir_alu_instr *alu = nir_def_as_alu(s.def);
+   nir_def *src = alu->src[0].src.ssa;
+   if (src->num_components != 1 || src->bit_size != 32)
+      return NULL;
+
+   if (alu->op == nir_op_unpack_32_4x8) {
+      *byte = s.comp;
+      return src;
+   }
+   if (alu->op == nir_op_extract_u8 && nir_src_is_const(alu->src[1].src)) {
+      *byte = nir_src_as_uint(alu->src[1].src);
+      return src;
+   }
+   return NULL;
+}
+
+/* Look up the table entries selected by each byte of sel (only its low 3 bits are used), from
+ * the first (hi == false) or second 8 bytes of the table.
+ */
+static nir_def *
+build_perm_half(nir_builder *b, const struct small_constant *constant, bool hi, nir_def *sel)
+{
+   return nir_byte_perm_amd(b, nir_imm_int(b, constant->perm_words[hi * 2 + 1]),
+                            nir_imm_int(b, constant->perm_words[hi * 2]), sel);
+}
+
+static nir_def *
+build_perm_load(nir_builder *b, const struct small_constant *constant, nir_def *deref_index,
+                nir_def *index)
+{
+   unsigned byte;
+   nir_def *word = small_constant_perm_word(deref_index, &byte);
+   if (word) {
+      /* Look up all four bytes of the word at once; CSE merges the sibling lookups and
+       * pack(unpack(x)) folds away when the results are packed again.
+       */
+      nir_def *sel = nir_iand_imm(b, word, 0x07070707);
+      nir_def *quad = build_perm_half(b, constant, false, sel);
+      if (constant->perm_len > 8) {
+         /* 0xff in each byte whose index has bit 3 set: selectors 8-11 replicate the top bit
+          * of bytes 1 and 3 of each source, and the shifts move bit 3 of every byte there.
+          */
+         nir_def *mask = nir_byte_perm_amd(b, nir_ishl_imm(b, word, 4), nir_ishl_imm(b, word, 12),
+                                           nir_imm_int(b, 0x0b090a08));
+         quad = nir_bitfield_select(b, mask, build_perm_half(b, constant, true, sel), quad);
+      }
+      return nir_channel(b, nir_unpack_32_4x8(b, quad), byte);
+   }
+
+   /* Select byte (index & 7) of each half and zero the other result bytes. */
+   nir_def *sel = nir_ior_imm(b, nir_iand_imm(b, index, 7), 0x0c0c0c00);
+   nir_def *res = build_perm_half(b, constant, false, sel);
+   if (constant->perm_len > 8)
+      res = nir_bcsel(b, nir_test_mask(b, index, 8), build_perm_half(b, constant, true, sel), res);
+   return res;
+}
+
 static nir_def *
 build_small_constant_load(nir_builder *b, nir_deref_instr *deref,
                           struct var_info *info, glsl_type_size_align_func size_align)
@@ -469,6 +558,11 @@ build_small_constant_load(nir_builder *b, nir_deref_instr *deref,
          nir_def *sel_false = nir_imm_intN_t(b, constant->sel_false, bit_size);
 
          ret[c] = nir_bcsel(b, ret[c], sel_true, sel_false);
+         continue;
+      }
+
+      if (constant->encoding == SMALL_CONST_PERM) {
+         ret[c] = nir_u2uN(b, build_perm_load(b, constant, deref->arr.index.ssa, index), bit_size);
          continue;
       }
 

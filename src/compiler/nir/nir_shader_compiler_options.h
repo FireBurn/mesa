@@ -659,6 +659,9 @@ typedef struct nir_shader_compiler_options {
    /** Backend supports pack_32_4x8 or pack_32_4x8_split. */
    bool has_pack_32_4x8;
 
+   /** Backend supports nir_op_byte_perm_amd. */
+   bool has_byte_perm_amd;
+
    /** Backend supports nir_load_pixel_coord */
    bool has_pixel_coord;
 
