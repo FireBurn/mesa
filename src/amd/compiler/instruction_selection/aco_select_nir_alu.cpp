@@ -794,6 +794,42 @@ visit_alu_instr(isel_context* ctx, nir_alu_instr* instr)
    case nir_op_vec16: {
       std::array<Temp, NIR_MAX_VEC_COMPONENTS> elems;
       unsigned num = instr->def.num_components;
+
+      /* Pass both halves of a source dword as one operand instead of extracting and re-packing
+       * them, which RA can't always do in place (e.g. loop-carried 16-bit vectors).
+       */
+      if (instr->def.bit_size == 16 && dst.type() == RegType::vgpr) {
+         auto is_dword_pair = [&](unsigned i) -> bool
+         {
+            const nir_alu_src& lo = instr->src[i];
+            return i % 2 == 0 && i + 1 < num && lo.src.ssa == instr->src[i + 1].src.ssa &&
+                   !nir_src_is_undef(lo.src) && lo.swizzle[0] % 2 == 0 &&
+                   instr->src[i + 1].swizzle[0] == lo.swizzle[0] + 1 &&
+                   get_ssa_temp(ctx, lo.src.ssa).type() == RegType::vgpr;
+         };
+
+         /* Only vectors made entirely of whole source dwords: other shapes (e.g. image coordinates
+          * with a constant layer) are better left to the extract path, which RA coalesces in place.
+          */
+         bool all_pairs = num % 2 == 0 && num > 2;
+         for (unsigned i = 0; all_pairs && i < num; i += 2)
+            all_pairs = is_dword_pair(i);
+
+         if (all_pairs) {
+            aco_ptr<Instruction> vec{
+               create_instruction(aco_opcode::p_create_vector, Format::PSEUDO, num / 2, 1)};
+            for (unsigned i = 0; i < num; i += 2) {
+               const nir_alu_src& src = instr->src[i];
+               Temp tmp = get_ssa_temp(ctx, src.src.ssa);
+               vec->operands[i / 2] =
+                  Operand(emit_extract_vector(ctx, tmp, src.swizzle[0] / 2, v1));
+            }
+            vec->definitions[0] = Definition(dst);
+            ctx->block->instructions.emplace_back(std::move(vec));
+            break;
+         }
+      }
+
       for (unsigned i = 0; i < num; ++i)
          elems[i] = get_alu_src(ctx, instr->src[i]);
 
