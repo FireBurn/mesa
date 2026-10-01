@@ -250,6 +250,26 @@ non_uniform_access_callback(const nir_src *src, void *_)
    return nir_chase_binding(*src).success ? 0x2 : 0x3;
 }
 
+static bool
+loop_has_cmat_muladd(nir_loop *loop)
+{
+   nir_foreach_block_in_cf_node (block, &loop->cf_node) {
+      nir_foreach_instr (instr, block) {
+         if (instr->type == nir_instr_type_intrinsic &&
+             nir_instr_as_intrinsic(instr)->intrinsic == nir_intrinsic_cmat_muladd_amd)
+            return true;
+      }
+   }
+   return false;
+}
+
+/* ALU has no side effects, so it can be executed speculatively when it is loop invariant. */
+static bool
+radv_licm_speculate_alu_in_wmma_loops(nir_instr *instr, nir_loop *loop, bool instr_block_dominates_exit)
+{
+   return instr->type == nir_instr_type_alu && loop_has_cmat_muladd(loop);
+}
+
 void
 radv_postprocess_nir(const struct radv_compiler_info *compiler_info, const struct radv_graphics_state_key *gfx_state,
                      struct radv_shader_stage *stage)
@@ -612,6 +632,13 @@ radv_postprocess_nir(const struct radv_compiler_info *compiler_info, const struc
    NIR_PASS(_, stage->nir, nir_lower_load_const_to_scalar);
    NIR_PASS(_, stage->nir, nir_opt_copy_prop);
    NIR_PASS(_, stage->nir, nir_opt_dce);
+
+   /* The lowering above creates address math that is invariant in cooperative matrix loops, but sits
+    * in conditional blocks. Only done on GFX12, where it was measured to help: on GFX11 the extra live
+    * registers push some shaders over an occupancy step.
+    */
+   if (!stage->key.optimisations_disabled && gfx_level >= GFX12)
+      NIR_PASS(_, stage->nir, nir_opt_licm, radv_licm_speculate_alu_in_wmma_loops);
 
    if (!stage->key.optimisations_disabled) {
       sink_opts |= nir_move_comparisons | nir_move_load_ubo | nir_move_load_ssbo | nir_move_alu;
